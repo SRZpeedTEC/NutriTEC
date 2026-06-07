@@ -1,3 +1,6 @@
+USE nutrition_db;
+GO
+
 /*
     NutriTEC Database Project
     Script: seed_data_tests.sql
@@ -38,9 +41,9 @@ ORDER BY u.user_id;
 
 SELECT
     n.nutritionist_code,
-    nu.name || ' ' || nu.last_name AS nutritionist_name,
+    CONCAT(nu.name, ' ', nu.last_name) AS nutritionist_name,
     c.client_id,
-    cu.name || ' ' || cu.last_name AS client_name,
+    CONCAT(cu.name, ' ', cu.last_name) AS client_name,
     nc.start_date,
     nc.end_date,
     nc.relation_status
@@ -64,8 +67,8 @@ SELECT
     p.plan_name,
     p.total_calories,
     n.nutritionist_code,
-    u.name || ' ' || u.last_name AS nutritionist_name
-FROM plan AS p
+    CONCAT(u.name, ' ', u.last_name) AS nutritionist_name
+FROM nutrition_plan AS p
 JOIN nutritionist AS n
     ON n.nutritionist_code = p.nutritionist_code
 JOIN app_user AS u
@@ -84,7 +87,7 @@ SELECT
     pr.product_name,
     mtp.quantity,
     mtp.calories AS contributed_calories
-FROM plan AS p
+FROM nutrition_plan AS p
 JOIN meal_time AS mt
     ON mt.plan_id = p.plan_id
 JOIN meal_time_product AS mtp
@@ -101,7 +104,7 @@ SELECT
     p.plan_id,
     p.plan_name,
     SUM(mtp.calories) AS calculated_total_calories
-FROM plan AS p
+FROM nutrition_plan AS p
 JOIN meal_time AS mt
     ON mt.plan_id = p.plan_id
 JOIN meal_time_product AS mtp
@@ -119,7 +122,7 @@ SELECT
     p.total_calories AS stored_total_calories,
     COALESCE(SUM(mtp.calories), 0) AS calculated_total_calories,
     p.total_calories - COALESCE(SUM(mtp.calories), 0) AS calorie_difference
-FROM plan AS p
+FROM nutrition_plan AS p
 LEFT JOIN meal_time AS mt
     ON mt.plan_id = p.plan_id
 LEFT JOIN meal_time_product AS mtp
@@ -133,7 +136,7 @@ ORDER BY p.plan_id;
 
 SELECT
     c.client_id,
-    u.name || ' ' || u.last_name AS client_name,
+    CONCAT(u.name, ' ', u.last_name) AS client_name,
     p.plan_id,
     p.plan_name,
     pa.start_date,
@@ -144,7 +147,7 @@ JOIN client AS c
     ON c.client_id = pa.client_id
 JOIN app_user AS u
     ON u.user_id = c.user_id
-JOIN plan AS p
+JOIN nutrition_plan AS p
     ON p.plan_id = pa.plan_id
 WHERE pa.assignment_status = 'ACTIVE'
 ORDER BY c.client_id, pa.start_date;
@@ -155,7 +158,7 @@ ORDER BY c.client_id, pa.start_date;
 
 SELECT
     r.recipe_id,
-    u.name || ' ' || u.last_name AS client_name,
+    CONCAT(u.name, ' ', u.last_name) AS client_name,
     r.nutritional_values,
     pr.bar_code,
     pr.product_name
@@ -176,7 +179,7 @@ ORDER BY r.recipe_id, pr.product_name;
 
 SELECT
     c.client_id,
-    u.name || ' ' || u.last_name AS client_name,
+    CONCAT(u.name, ' ', u.last_name) AS client_name,
     m.measure_datetime,
     m.body_weight,
     m.body_mass_index,
@@ -199,7 +202,7 @@ ORDER BY c.client_id, m.measure_datetime;
 SELECT
     dc.consume_date,
     c.client_id,
-    u.name || ' ' || u.last_name AS client_name,
+    CONCAT(u.name, ' ', u.last_name) AS client_name,
     mt.meal_time_id,
     mt.meal_type,
     p.plan_name,
@@ -211,7 +214,7 @@ JOIN app_user AS u
     ON u.user_id = c.user_id
 JOIN meal_time AS mt
     ON mt.meal_time_id = dc.meal_time_id
-JOIN plan AS p
+JOIN nutrition_plan AS p
     ON p.plan_id = mt.plan_id
 ORDER BY dc.consume_date, c.client_id, mt.meal_time_id;
 
@@ -221,9 +224,9 @@ ORDER BY dc.consume_date, c.client_id, mt.meal_time_id;
 
 SELECT
     u.user_id,
-    u.name || ' ' || u.last_name AS creator_name,
+    CONCAT(u.name, ' ', u.last_name) AS creator_name,
     COUNT(pr.bar_code) AS product_count,
-    STRING_AGG(pr.product_name, ', ' ORDER BY pr.product_name) AS products
+    STRING_AGG(pr.product_name, ', ') WITHIN GROUP (ORDER BY pr.product_name) AS products
 FROM app_user AS u
 JOIN product AS pr
     ON pr.user_id = u.user_id
@@ -236,19 +239,19 @@ ORDER BY u.user_id;
 
 SELECT
     'recipe_product' AS relationship_table,
-    rp.recipe_id::VARCHAR AS parent_id,
+    CAST(rp.recipe_id AS VARCHAR(40)) AS parent_id,
     rp.product_code AS child_id
 FROM recipe_product AS rp
 UNION ALL
 SELECT
     'meal_time_product' AS relationship_table,
-    mtp.meal_time_id::VARCHAR AS parent_id,
+    CAST(mtp.meal_time_id AS VARCHAR(40)) AS parent_id,
     mtp.product_code AS child_id
 FROM meal_time_product AS mtp
 UNION ALL
 SELECT
     'nutritionist_client' AS relationship_table,
-    nc.nutritionist_code::VARCHAR AS parent_id,
-    nc.client_id::VARCHAR AS child_id
+    CAST(nc.nutritionist_code AS VARCHAR(40)) AS parent_id,
+    CAST(nc.client_id AS VARCHAR(40)) AS child_id
 FROM nutritionist_client AS nc
 ORDER BY relationship_table, parent_id, child_id;

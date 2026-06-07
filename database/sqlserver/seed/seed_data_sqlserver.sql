@@ -1,3 +1,6 @@
+USE nutrition_db;
+GO
+
 /*
     NutriTEC Database Project
     Script: seed_data.sql
@@ -6,12 +9,14 @@
     Notes:
       - Run this script after 01_create_schema.sql.
       - Fixed identity values are used so sample queries are easy to review.
-      - PostgreSQL identity sequences are reset at the end of each seeded table.
+      - SQL Server IDENTITY_INSERT is used for tables seeded with fixed identity values.
 */
 
 -- ============================================================================
 -- Application Users
 -- ============================================================================
+
+SET IDENTITY_INSERT app_user ON;
 
 INSERT INTO app_user (
     user_id,
@@ -22,28 +27,32 @@ INSERT INTO app_user (
     age,
     email
 )
-OVERRIDING SYSTEM VALUE
 VALUES
-    (1, DATE '1985-03-14', 'Andrea', 'Mora', 'hash_admin_001', 41, 'andrea.mora@nutritec.test'),
-    (2, DATE '1989-07-22', 'Carlos', 'Vargas', 'hash_nutri_001', 36, 'carlos.vargas@nutritec.test'),
-    (3, DATE '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 34, 'mariana.solis@nutritec.test'),
-    (4, DATE '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 29, 'daniel.rojas@nutritec.test'),
-    (5, DATE '1994-09-17', 'Sofia', 'Castro', 'hash_client_002', 31, 'sofia.castro@nutritec.test'),
-    (6, DATE '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 37, 'luis.herrera@nutritec.test'),
-    (7, DATE '1999-04-26', 'Valeria', 'Jimenez', 'hash_user_007', 27, 'valeria.jimenez@nutritec.test');
+    (1, '1985-03-14', 'Andrea', 'Mora', 'hash_admin_001', 41, 'andrea.mora@nutritec.test'),
+    (2, '1989-07-22', 'Carlos', 'Vargas', 'hash_nutri_001', 36, 'carlos.vargas@nutritec.test'),
+    (3, '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 34, 'mariana.solis@nutritec.test'),
+    (4, '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 29, 'daniel.rojas@nutritec.test'),
+    (5, '1994-09-17', 'Sofia', 'Castro', 'hash_client_002', 31, 'sofia.castro@nutritec.test'),
+    (6, '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 37, 'luis.herrera@nutritec.test'),
+    (7, '1999-04-26', 'Valeria', 'Jimenez', 'hash_user_007', 27, 'valeria.jimenez@nutritec.test');
 
-SELECT setval(pg_get_serial_sequence('app_user', 'user_id'), 7, true);
+SET IDENTITY_INSERT app_user OFF;
+
 
 -- ============================================================================
 -- User Profiles
 -- ============================================================================
 
+SET IDENTITY_INSERT admin ON;
+
 INSERT INTO admin (admin_id, user_id)
-OVERRIDING SYSTEM VALUE
 VALUES
     (1, 1);
 
-SELECT setval(pg_get_serial_sequence('admin', 'admin_id'), 1, true);
+SET IDENTITY_INSERT admin OFF;
+
+
+SET IDENTITY_INSERT nutritionist ON;
 
 INSERT INTO nutritionist (
     nutritionist_code,
@@ -56,21 +65,23 @@ INSERT INTO nutritionist (
     body_mass_index,
     user_id
 )
-OVERRIDING SYSTEM VALUE
 VALUES
     (1, 'CARD', 'photos/carlos-vargas.jpg', 'San Pedro, San Jose', 'CR-108540221', 'enc_card_carlos_001', 76.50, 24.20, 2),
     (2, 'SINPE', 'photos/mariana-solis.jpg', 'Cartago Centro, Cartago', 'CR-207760554', 'enc_card_mariana_002', 62.10, 22.40, 3);
 
-SELECT setval(pg_get_serial_sequence('nutritionist', 'nutritionist_code'), 2, true);
+SET IDENTITY_INSERT nutritionist OFF;
+
+
+SET IDENTITY_INSERT client ON;
 
 INSERT INTO client (client_id, max_daily_calories, country, user_id)
-OVERRIDING SYSTEM VALUE
 VALUES
     (1, 2200.00, 'Costa Rica', 4),
     (2, 1850.00, 'Costa Rica', 5),
     (3, 2400.00, 'Panama', 6);
 
-SELECT setval(pg_get_serial_sequence('client', 'client_id'), 3, true);
+SET IDENTITY_INSERT client OFF;
+
 
 INSERT INTO nutritionist_client (
     start_date,
@@ -80,22 +91,26 @@ INSERT INTO nutritionist_client (
     client_id
 )
 VALUES
-    (DATE '2026-01-10', NULL, 'ACTIVE', 1, 1),
-    (DATE '2026-02-01', NULL, 'ACTIVE', 1, 2),
-    (DATE '2025-10-15', DATE '2026-03-31', 'FINISHED', 2, 2),
-    (DATE '2026-03-05', NULL, 'ACTIVE', 2, 3);
+    ('2026-01-10', NULL, 'ACTIVE', 1, 1),
+    ('2026-02-01', NULL, 'ACTIVE', 1, 2),
+    ('2025-10-15', '2026-03-31', 'FINISHED', 2, 2),
+    ('2026-03-05', NULL, 'ACTIVE', 2, 3);
 
 -- ============================================================================
 -- Plans And Assignments
 -- ============================================================================
 
-INSERT INTO plan (plan_id, plan_name, total_calories, nutritionist_code)
-OVERRIDING SYSTEM VALUE
+SET IDENTITY_INSERT nutrition_plan ON;
+
+INSERT INTO nutrition_plan (plan_id, plan_name, total_calories, nutritionist_code)
 VALUES
     (1, 'Balanced Maintenance Plan', 1475.00, 1),
     (2, 'High Protein Training Plan', 1850.00, 2);
 
-SELECT setval(pg_get_serial_sequence('plan', 'plan_id'), 2, true);
+SET IDENTITY_INSERT nutrition_plan OFF;
+
+
+SET IDENTITY_INSERT plan_assignment ON;
 
 INSERT INTO plan_assignment (
     assignment_id,
@@ -105,17 +120,18 @@ INSERT INTO plan_assignment (
     plan_id,
     client_id
 )
-OVERRIDING SYSTEM VALUE
 VALUES
-    (1, DATE '2026-01-15', NULL, 'ACTIVE', 1, 1),
-    (2, DATE '2026-02-10', NULL, 'ACTIVE', 1, 2),
-    (3, DATE '2026-03-10', NULL, 'ACTIVE', 2, 3),
-    (4, DATE '2025-11-01', DATE '2026-01-31', 'FINISHED', 2, 2);
+    (1, '2026-01-15', NULL, 'ACTIVE', 1, 1),
+    (2, '2026-02-10', NULL, 'ACTIVE', 1, 2),
+    (3, '2026-03-10', NULL, 'ACTIVE', 2, 3),
+    (4, '2025-11-01', '2026-01-31', 'FINISHED', 2, 2);
 
-SELECT setval(pg_get_serial_sequence('plan_assignment', 'assignment_id'), 4, true);
+SET IDENTITY_INSERT plan_assignment OFF;
+
+
+SET IDENTITY_INSERT meal_time ON;
 
 INSERT INTO meal_time (meal_time_id, meal_type, plan_id)
-OVERRIDING SYSTEM VALUE
 VALUES
     (1, 'BREAKFAST', 1),
     (2, 'LUNCH', 1),
@@ -126,7 +142,8 @@ VALUES
     (7, 'DINNER', 2),
     (8, 'SNACK', 2);
 
-SELECT setval(pg_get_serial_sequence('meal_time', 'meal_time_id'), 8, true);
+SET IDENTITY_INSERT meal_time OFF;
+
 
 -- ============================================================================
 -- Products And Meal Composition
@@ -182,14 +199,16 @@ VALUES
 -- Recipes
 -- ============================================================================
 
+SET IDENTITY_INSERT recipe ON;
+
 INSERT INTO recipe (recipe_id, nutritional_values, client_id)
-OVERRIDING SYSTEM VALUE
 VALUES
     (1, 'High-protein yogurt bowl with berries. Approx. 275 kcal.', 1),
     (2, 'Chicken and brown rice lunch bowl. Approx. 570 kcal.', 2),
     (3, 'Salmon and avocado dinner plate. Approx. 576 kcal.', 3);
 
-SELECT setval(pg_get_serial_sequence('recipe', 'recipe_id'), 3, true);
+SET IDENTITY_INSERT recipe OFF;
+
 
 INSERT INTO recipe_product (recipe_id, product_code)
 VALUES
@@ -216,11 +235,11 @@ INSERT INTO measure (
     client_id
 )
 VALUES
-    (TIMESTAMP '2026-01-15 08:00:00', 38.20, 41.50, 79.40, 98.00, 88.00, 22.50, 25.10, 1),
-    (TIMESTAMP '2026-02-15 08:10:00', 37.80, 42.10, 78.20, 97.20, 86.50, 21.80, 24.70, 1),
-    (TIMESTAMP '2026-02-10 09:00:00', 33.50, 36.20, 63.10, 94.00, 75.40, 26.30, 23.20, 2),
-    (TIMESTAMP '2026-03-12 09:15:00', 33.20, 36.90, 62.40, 93.50, 74.80, 25.70, 22.90, 2),
-    (TIMESTAMP '2026-03-10 07:45:00', 39.00, 44.80, 84.50, 101.00, 90.00, 20.20, 24.90, 3);
+    ('2026-01-15 08:00:00', 38.20, 41.50, 79.40, 98.00, 88.00, 22.50, 25.10, 1),
+    ('2026-02-15 08:10:00', 37.80, 42.10, 78.20, 97.20, 86.50, 21.80, 24.70, 1),
+    ('2026-02-10 09:00:00', 33.50, 36.20, 63.10, 94.00, 75.40, 26.30, 23.20, 2),
+    ('2026-03-12 09:15:00', 33.20, 36.90, 62.40, 93.50, 74.80, 25.70, 22.90, 2),
+    ('2026-03-10 07:45:00', 39.00, 44.80, 84.50, 101.00, 90.00, 20.20, 24.90, 3);
 
 -- ============================================================================
 -- Daily Consumption
@@ -233,11 +252,11 @@ INSERT INTO daily_consume (
     meal_time_id
 )
 VALUES
-    (DATE '2026-04-01', 275.00, 1, 1),
-    (DATE '2026-04-01', 570.00, 1, 2),
-    (DATE '2026-04-01', 576.00, 1, 3),
-    (DATE '2026-04-02', 250.00, 2, 1),
-    (DATE '2026-04-02', 550.00, 2, 2),
-    (DATE '2026-04-03', 335.00, 3, 5),
-    (DATE '2026-04-03', 795.00, 3, 6),
-    (DATE '2026-04-03', 600.00, 3, 7);
+    ('2026-04-01', 275.00, 1, 1),
+    ('2026-04-01', 570.00, 1, 2),
+    ('2026-04-01', 576.00, 1, 3),
+    ('2026-04-02', 250.00, 2, 1),
+    ('2026-04-02', 550.00, 2, 2),
+    ('2026-04-03', 335.00, 3, 5),
+    ('2026-04-03', 795.00, 3, 6),
+    ('2026-04-03', 600.00, 3, 7);
