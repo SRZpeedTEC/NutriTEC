@@ -1,6 +1,6 @@
 /*
     NutriTEC Database Project
-    Script: 03_visualization_samples.sql
+    Script: seed_data_tests.sql
     Purpose: Provide sample queries that verify schema relationships and seed data.
 
     Notes:

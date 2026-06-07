@@ -1,6 +1,6 @@
 /*
     NutriTEC Database Project
-    Script: 00_create_database.sql
+    Script: create_database.sql
     Purpose: Create the project database.
 
     Execution order:

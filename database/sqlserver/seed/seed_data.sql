@@ -1,6 +1,6 @@
 /*
     NutriTEC Database Project
-    Script: 02_seed_data.sql
+    Script: seed_data.sql
     Purpose: Insert realistic seed data that satisfies all schema constraints.
 
     Notes:

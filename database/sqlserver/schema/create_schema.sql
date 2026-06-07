@@ -1,6 +1,6 @@
 /*
     NutriTEC Database Project
-    Script: 01_create_schema.sql
+    Script: create_schema.sql
     Purpose: Create the relational schema, constraints, and basic validation.
 
     Notes:
