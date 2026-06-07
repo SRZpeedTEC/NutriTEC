@@ -1,0 +1,37 @@
+services:
+  # sqlserver:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_SA_PASSWORD: "Change_me_12345"
+  #   ports:
+  #     - "1433:1433"
+
+  # mongodb:
+  #   image: mongo:7
+  #   ports:
+  #     - "27017:27017"
+
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: deployment/docker/NutriTEC.Api.Dockerfile
+  #   depends_on:
+  #     - sqlserver
+
+  # mongoapi:
+  #   build:
+  #     context: .
+  #     dockerfile: deployment/docker/NutriTEC.MongoApi.Dockerfile
+  #   depends_on:
+  #     - mongodb
+
+  # frontend:
+  #   build:
+  #     context: src/frontend/nutritec-web
+  #   ports:
+  #     - "5173:5173"
+  placeholder:
+    image: hello-world
+    profiles:
+      - disabled
