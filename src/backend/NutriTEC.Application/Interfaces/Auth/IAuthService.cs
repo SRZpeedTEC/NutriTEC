@@ -4,13 +4,13 @@ namespace NutriTEC.Application.Interfaces.Auth;
 
 public interface IAuthService
 {
-    // Registration returns a typed result so controllers can translate outcomes into HTTP responses.
-    Task<AuthServiceResult<RegisterClientResponse>> RegisterClientAsync(
+    // Registration returns the success DTO and throws application exceptions for expected business failures.
+    Task<RegisterClientResponse> RegisterClientAsync(
         RegisterClientRequest request,
         CancellationToken cancellationToken);
 
     // Login returns session data for supported account subtypes without exposing credential details.
-    Task<AuthServiceResult<LoginResponse>> LoginAsync(
+    Task<LoginResponse> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken);
 }

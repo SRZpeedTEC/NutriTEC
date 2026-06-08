@@ -1,5 +1,6 @@
 using AutoMapper;
 using NutriTEC.Application.DTOs.Auth;
+using NutriTEC.Application.Exceptions;
 using NutriTEC.Application.Interfaces.Auth;
 using NutriTEC.Application.Interfaces.Clients;
 using NutriTEC.Application.Interfaces.Users;
@@ -26,7 +27,7 @@ public class AuthService : IAuthService
         _mapper = mapper;
     }
 
-    public async Task<AuthServiceResult<RegisterClientResponse>> RegisterClientAsync(
+    public async Task<RegisterClientResponse> RegisterClientAsync(
         RegisterClientRequest request,
         CancellationToken cancellationToken)
     {
@@ -36,7 +37,7 @@ public class AuthService : IAuthService
         // Email uniqueness is a business rule enforced before the registration is persisted.
         if (await _userRepository.EmailExistsAsync(request.Email, cancellationToken))
         {
-            return AuthServiceResult<RegisterClientResponse>.EmailConflict("El correo electronico ya esta registrado.");
+            throw new ConflictException("El correo electronico ya esta registrado.");
         }
 
         // Mapping builds the domain objects while the service applies registration-specific decisions.
@@ -52,10 +53,10 @@ public class AuthService : IAuthService
         await _clientRepository.RegisterClientAsync(user, client, initialMeasure, cancellationToken);
 
         var response = CreateRegisterClientResponse(user, client);
-        return AuthServiceResult<RegisterClientResponse>.Success(response);
+        return response;
     }
 
-    public async Task<AuthServiceResult<LoginResponse>> LoginAsync(
+    public async Task<LoginResponse> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken)
     {
@@ -65,7 +66,7 @@ public class AuthService : IAuthService
 
         if (user is null || !_passwordHasher.VerifyPassword(request.Password, user.HashPassword))
         {
-            return AuthServiceResult<LoginResponse>.InvalidCredentials("Credenciales invalidas.");
+            throw new UnauthorizedException("Credenciales invalidas.");
         }
 
         // The current flow supports clients by checking the related client profile table.
@@ -73,7 +74,7 @@ public class AuthService : IAuthService
 
         if (client is null)
         {
-            return AuthServiceResult<LoginResponse>.InvalidCredentials("Credenciales invalidas.");
+            throw new UnauthorizedException("Credenciales invalidas.");
         }
 
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -83,7 +84,7 @@ public class AuthService : IAuthService
             cancellationToken);
 
         var response = CreateLoginResponse(user, client, activePlanAssignment);
-        return AuthServiceResult<LoginResponse>.Success(response);
+        return response;
     }
 
     private static void NormalizeRegistrationRequest(RegisterClientRequest request)
