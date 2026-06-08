@@ -10,4 +10,13 @@ public interface IClientRepository
         Client client,
         Measure initialMeasure,
         CancellationToken cancellationToken);
+
+    // Login infers client accounts from the user-to-client relationship.
+    Task<Client?> GetByUserIdAsync(int userId, CancellationToken cancellationToken);
+
+    // The active plan lookup reads assignment status and date range from the database.
+    Task<PlanAssignment?> GetActivePlanAssignmentAsync(
+        int clientId,
+        DateOnly currentDate,
+        CancellationToken cancellationToken);
 }

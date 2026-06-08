@@ -14,4 +14,6 @@ public class Client
     public User User { get; set; } = null!;
 
     public ICollection<Measure> Measures { get; set; } = new List<Measure>();
+
+    public ICollection<PlanAssignment> PlanAssignments { get; set; } = new List<PlanAssignment>();
 }

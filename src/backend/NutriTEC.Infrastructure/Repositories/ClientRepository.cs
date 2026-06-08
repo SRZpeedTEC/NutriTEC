@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using NutriTEC.Application.Interfaces.Clients;
 using NutriTEC.Domain.Entities;
@@ -32,5 +33,30 @@ public class ClientRepository : IClientRepository
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    public Task<Client?> GetByUserIdAsync(int userId, CancellationToken cancellationToken)
+    {
+        // A client row proves the user is supported by the current login flow.
+        return _dbContext.Clients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(client => client.UserId == userId, cancellationToken);
+    }
+
+    public Task<PlanAssignment?> GetActivePlanAssignmentAsync(
+        int clientId,
+        DateOnly currentDate,
+        CancellationToken cancellationToken)
+    {
+        // Active plan selection follows the assignment status and date range defined in the SQL schema.
+        return _dbContext.PlanAssignments
+            .AsNoTracking()
+            .Include(assignment => assignment.NutritionPlan)
+            .Where(assignment => assignment.ClientId == clientId)
+            .Where(assignment => assignment.AssignmentStatus == "ACTIVE")
+            .Where(assignment => assignment.StartDate <= currentDate)
+            .Where(assignment => assignment.EndDate == null || assignment.EndDate >= currentDate)
+            .OrderByDescending(assignment => assignment.StartDate)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

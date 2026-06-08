@@ -16,6 +16,10 @@ public class NutriTecDbContext : DbContext
 
     public DbSet<Measure> Measures => Set<Measure>();
 
+    public DbSet<NutritionPlan> NutritionPlans => Set<NutritionPlan>();
+
+    public DbSet<PlanAssignment> PlanAssignments => Set<PlanAssignment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Entity configurations are kept in dedicated classes to keep the DbContext focused on persistence setup.

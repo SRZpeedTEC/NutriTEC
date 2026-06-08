@@ -8,4 +8,9 @@ public interface IAuthService
     Task<AuthServiceResult<RegisterClientResponse>> RegisterClientAsync(
         RegisterClientRequest request,
         CancellationToken cancellationToken);
+
+    // Login returns session data for supported account subtypes without exposing credential details.
+    Task<AuthServiceResult<LoginResponse>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken);
 }

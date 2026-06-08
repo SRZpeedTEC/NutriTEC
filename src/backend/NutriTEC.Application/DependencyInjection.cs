@@ -15,6 +15,7 @@ public static class DependencyInjection
         // Application services expose business workflows and the supporting validation/mapping rules.
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IValidator<RegisterClientRequest>, RegisterClientRequestValidator>();
+        services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddAutoMapper(_ => { }, typeof(AuthMappingProfile).Assembly);
 
         return services;

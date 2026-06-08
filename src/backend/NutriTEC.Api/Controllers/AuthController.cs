@@ -11,13 +11,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IValidator<RegisterClientRequest> _registerClientValidator;
+    private readonly IValidator<LoginRequest> _loginValidator;
 
     public AuthController(
         IAuthService authService,
-        IValidator<RegisterClientRequest> registerClientValidator)
+        IValidator<RegisterClientRequest> registerClientValidator,
+        IValidator<LoginRequest> loginValidator)
     {
         _authService = authService;
         _registerClientValidator = registerClientValidator;
+        _loginValidator = loginValidator;
     }
 
     [HttpPost("register/client")]
@@ -30,17 +33,7 @@ public class AuthController : ControllerBase
 
         if (!validationResult.IsValid)
         {
-            var errors = validationResult.Errors
-                .GroupBy(error => error.PropertyName)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.Select(error => error.ErrorMessage).ToArray());
-
-            return BadRequest(new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Se encontraron uno o mas errores de validacion."
-            });
+            return BadRequest(CreateValidationProblemDetails(validationResult));
         }
 
         var result = await _authService.RegisterClientAsync(request, cancellationToken);
@@ -54,5 +47,47 @@ public class AuthController : ControllerBase
         }
 
         return Created("/api/auth/register/client", result.Value);
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        // The controller validates request shape and delegates credential checks to the service.
+        var validationResult = await _loginValidator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(CreateValidationProblemDetails(validationResult));
+        }
+
+        var result = await _authService.LoginAsync(request, cancellationToken);
+
+        if (result.Unauthorized)
+        {
+            return Unauthorized(new
+            {
+                message = result.ErrorMessage
+            });
+        }
+
+        return Ok(result.Value);
+    }
+
+    private static ValidationProblemDetails CreateValidationProblemDetails(FluentValidation.Results.ValidationResult validationResult)
+    {
+        // Validation responses use the same shape for registration and login endpoints.
+        var errors = validationResult.Errors
+            .GroupBy(error => error.PropertyName)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(error => error.ErrorMessage).ToArray());
+
+        return new ValidationProblemDetails(errors)
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = "Se encontraron uno o mas errores de validacion."
+        };
     }
 }

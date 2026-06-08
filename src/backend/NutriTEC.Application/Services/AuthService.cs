@@ -55,6 +55,37 @@ public class AuthService : IAuthService
         return AuthServiceResult<RegisterClientResponse>.Success(response);
     }
 
+    public async Task<AuthServiceResult<LoginResponse>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Login normalizes only the lookup key before reading persisted credentials.
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+
+        if (user is null || !_passwordHasher.VerifyPassword(request.Password, user.HashPassword))
+        {
+            return AuthServiceResult<LoginResponse>.InvalidCredentials("Credenciales invalidas.");
+        }
+
+        // The current flow supports clients by checking the related client profile table.
+        var client = await _clientRepository.GetByUserIdAsync(user.UserId, cancellationToken);
+
+        if (client is null)
+        {
+            return AuthServiceResult<LoginResponse>.InvalidCredentials("Credenciales invalidas.");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var activePlanAssignment = await _clientRepository.GetActivePlanAssignmentAsync(
+            client.ClientId,
+            today,
+            cancellationToken);
+
+        var response = CreateLoginResponse(user, client, activePlanAssignment);
+        return AuthServiceResult<LoginResponse>.Success(response);
+    }
+
     private static void NormalizeRegistrationRequest(RegisterClientRequest request)
     {
         // The service owns workflow normalization before persistence and duplicate-email checks.
@@ -74,6 +105,45 @@ public class AuthService : IAuthService
             Email = user.Email,
             FullName = $"{user.Name} {user.LastName}",
             Message = "Cliente registrado correctamente."
+        };
+    }
+
+    private static LoginResponse CreateLoginResponse(
+        User user,
+        Client client,
+        PlanAssignment? activePlanAssignment)
+    {
+        // Login responses combine account, client profile, and optional active plan context.
+        return new LoginResponse
+        {
+            UserId = user.UserId,
+            ClientId = client.ClientId,
+            Email = user.Email,
+            FullName = $"{user.Name} {user.LastName}",
+            AccountType = "Client",
+            ActivePlan = CreateActivePlanSummary(activePlanAssignment),
+            Message = "Inicio de sesion correcto."
+        };
+    }
+
+    private static ActivePlanSummaryResponse? CreateActivePlanSummary(PlanAssignment? activePlanAssignment)
+    {
+        // A null active plan keeps login successful while clearly signaling no current assignment.
+        if (activePlanAssignment is null)
+        {
+            return null;
+        }
+
+        return new ActivePlanSummaryResponse
+        {
+            AssignmentId = activePlanAssignment.AssignmentId,
+            PlanId = activePlanAssignment.PlanId,
+            PlanName = activePlanAssignment.NutritionPlan.PlanName,
+            TotalCalories = activePlanAssignment.NutritionPlan.TotalCalories,
+            NutritionistCode = activePlanAssignment.NutritionPlan.NutritionistCode,
+            StartDate = activePlanAssignment.StartDate,
+            EndDate = activePlanAssignment.EndDate,
+            AssignmentStatus = activePlanAssignment.AssignmentStatus
         };
     }
 

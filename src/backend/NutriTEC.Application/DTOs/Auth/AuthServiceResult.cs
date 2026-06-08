@@ -7,6 +7,8 @@ public class AuthServiceResult<TResponse>
 
     public bool Conflict { get; private init; }
 
+    public bool Unauthorized { get; private init; }
+
     public string? ErrorMessage { get; private init; }
 
     public TResponse? Value { get; private init; }
@@ -25,6 +27,15 @@ public class AuthServiceResult<TResponse>
         return new AuthServiceResult<TResponse>
         {
             Conflict = true,
+            ErrorMessage = message
+        };
+    }
+
+    public static AuthServiceResult<TResponse> InvalidCredentials(string message)
+    {
+        return new AuthServiceResult<TResponse>
+        {
+            Unauthorized = true,
             ErrorMessage = message
         };
     }
