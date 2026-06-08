@@ -31,6 +31,10 @@ public class ExceptionHandlingMiddleware
         {
             await WriteApplicationErrorAsync(context, HttpStatusCode.Conflict, exception.Message);
         }
+        catch (NotFoundException exception)
+        {
+            await WriteApplicationErrorAsync(context, HttpStatusCode.NotFound, exception.Message);
+        }
         catch (NutriTEC.Application.Exceptions.UnauthorizedException exception)
         {
             await WriteApplicationErrorAsync(context, HttpStatusCode.Unauthorized, exception.Message);

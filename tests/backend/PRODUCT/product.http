@@ -1,0 +1,110 @@
+@baseUrl = http://localhost:5024
+@userId = 1
+@barCode = NT-PENDING-001
+
+### Add product successfully
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{barCode}}",
+  "productName": "Yogurt natural alto en proteina",
+  "portionUnit": "g",
+  "portionSize": 170,
+  "calories": 120,
+  "fat": 2.5,
+  "sodium": 65,
+  "carbohydrates": 8,
+  "protein": 16,
+  "vitamins": 1.5,
+  "calcium": 180,
+  "iron": 0.2,
+  "userId": {{userId}}
+}
+
+### Try to add duplicated barcode
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{barCode}}",
+  "productName": "Yogurt natural duplicado",
+  "portionUnit": "g",
+  "portionSize": 170,
+  "calories": 118,
+  "fat": 2,
+  "sodium": 60,
+  "carbohydrates": 7,
+  "protein": 15,
+  "vitamins": 1,
+  "calcium": 175,
+  "iron": 0.2,
+  "userId": {{userId}}
+}
+
+### List my pending products
+GET {{baseUrl}}/api/product/pending/{{userId}}
+
+### Edit pending product successfully
+PUT {{baseUrl}}/api/product/{{barCode}}
+Content-Type: application/json
+
+{
+  "productName": "Yogurt natural alto en proteina actualizado",
+  "portionUnit": "g",
+  "portionSize": 180,
+  "calories": 130,
+  "fat": 2.8,
+  "sodium": 68,
+  "carbohydrates": 9,
+  "protein": 17,
+  "vitamins": 1.6,
+  "calcium": 190,
+  "iron": 0.3,
+  "userId": {{userId}}
+}
+
+### Try to edit product that is not pending or does not belong to the user
+PUT {{baseUrl}}/api/product/{{barCode}}
+Content-Type: application/json
+
+{
+  "productName": "Cambio no autorizado",
+  "portionUnit": "g",
+  "portionSize": 180,
+  "calories": 130,
+  "fat": 2.8,
+  "sodium": 68,
+  "carbohydrates": 9,
+  "protein": 17,
+  "vitamins": 1.6,
+  "calcium": 190,
+  "iron": 0.3,
+  "userId": 999
+}
+
+### Try to delete product that is not pending or does not belong to the user
+DELETE {{baseUrl}}/api/product/{{barCode}}?userId=999
+
+### Delete pending product successfully
+DELETE {{baseUrl}}/api/product/{{barCode}}?userId={{userId}}
+
+### Try to create product with invalid numeric values
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "NT-INVALID-001",
+  "productName": "Producto invalido",
+  "portionUnit": "g",
+  "portionSize": 0,
+  "calories": -1,
+  "fat": -2,
+  "sodium": -3,
+  "carbohydrates": -4,
+  "protein": -5,
+  "vitamins": -6,
+  "calcium": -7,
+  "iron": -8,
+  "userId": {{userId}}
+}

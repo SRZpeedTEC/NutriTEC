@@ -27,4 +27,10 @@ public class UserRepository : IUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
     }
+
+    public Task<bool> ExistsByIdAsync(int userId, CancellationToken cancellationToken)
+    {
+        // Submitter checks keep product workflows from relying on database constraint failures.
+        return _dbContext.Users.AnyAsync(user => user.UserId == userId, cancellationToken);
+    }
 }
