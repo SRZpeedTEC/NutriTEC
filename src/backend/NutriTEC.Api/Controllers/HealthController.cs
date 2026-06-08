@@ -9,7 +9,7 @@ public class HealthController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        // Control tecnico para confirmar que la API esta disponible.
+        // Technical endpoint used to confirm that the API is available.
         return Ok(new
         {
             status = "Healthy",
