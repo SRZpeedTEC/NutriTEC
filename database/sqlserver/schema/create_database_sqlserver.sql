@@ -7,7 +7,7 @@
       1. Run this script from SQL Server Management Studio connected to master.
       2. Run create_schema_sqlserver.sql.
       3. Run seed_data_sqlserver.sql.
-      4. Run seed_data_tests_sqlserver.sql.
+      4. Run any SQL Server sample scripts in this folder, if present.
 */
 
 USE master;
