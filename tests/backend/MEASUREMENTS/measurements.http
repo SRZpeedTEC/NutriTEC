@@ -1,0 +1,130 @@
+@baseUrl = http://localhost:5024
+@clientId = 1
+@measurementDate = 2026-06-17
+@olderMeasurementDate = 2026-06-01
+@missingMeasurementDate = 2026-05-15
+
+### Register measurements successfully
+POST {{baseUrl}}/api/measurements
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "measurementDate": "{{measurementDate}}",
+  "bodyWeight": 68.2,
+  "bodyMassIndex": 23.2,
+  "waist": 73.8,
+  "neck": 34.0,
+  "hip": 96.1,
+  "musclePercentage": 40.1,
+  "fatPercentage": 24.3
+}
+
+### Try to register measurements for a duplicated date
+POST {{baseUrl}}/api/measurements
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "measurementDate": "{{measurementDate}}",
+  "bodyWeight": 68.0,
+  "bodyMassIndex": 23.1,
+  "waist": 73.5,
+  "neck": 34.0,
+  "hip": 96.0,
+  "musclePercentage": 40.0,
+  "fatPercentage": 24.0
+}
+
+### Try to register measurements with a future date
+POST {{baseUrl}}/api/measurements
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "measurementDate": "2099-01-01",
+  "bodyWeight": 68.2,
+  "bodyMassIndex": 23.2,
+  "waist": 73.8,
+  "neck": 34.0,
+  "hip": 96.1,
+  "musclePercentage": 40.1,
+  "fatPercentage": 24.3
+}
+
+### Try to register measurements with invalid numeric values
+POST {{baseUrl}}/api/measurements
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "measurementDate": "{{measurementDate}}",
+  "bodyWeight": 0,
+  "bodyMassIndex": -1,
+  "waist": -73.8,
+  "neck": 0,
+  "hip": -96.1,
+  "musclePercentage": -1,
+  "fatPercentage": 101
+}
+
+### Try to register measurements where muscle plus fat exceeds 100
+POST {{baseUrl}}/api/measurements
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "measurementDate": "{{measurementDate}}",
+  "bodyWeight": 68.2,
+  "bodyMassIndex": 23.2,
+  "waist": 73.8,
+  "neck": 34.0,
+  "hip": 96.1,
+  "musclePercentage": 70,
+  "fatPercentage": 40
+}
+
+### Get measurement history for a client
+GET {{baseUrl}}/api/measurements/client/{{clientId}}
+
+### Edit the most recent measurement successfully
+PUT {{baseUrl}}/api/measurements/{{clientId}}/{{measurementDate}}
+Content-Type: application/json
+
+{
+  "bodyWeight": 67.9,
+  "bodyMassIndex": 23.0,
+  "waist": 73.0,
+  "neck": 33.9,
+  "hip": 95.8,
+  "musclePercentage": 40.5,
+  "fatPercentage": 23.9
+}
+
+### Try to edit an older measurement record
+PUT {{baseUrl}}/api/measurements/{{clientId}}/{{olderMeasurementDate}}
+Content-Type: application/json
+
+{
+  "bodyWeight": 69.5,
+  "bodyMassIndex": 23.7,
+  "waist": 75.0,
+  "neck": 34.2,
+  "hip": 97.0,
+  "musclePercentage": 39.8,
+  "fatPercentage": 25.0
+}
+
+### Try to edit a measurement record that does not exist
+PUT {{baseUrl}}/api/measurements/{{clientId}}/{{missingMeasurementDate}}
+Content-Type: application/json
+
+{
+  "bodyWeight": 69.5,
+  "bodyMassIndex": 23.7,
+  "waist": 75.0,
+  "neck": 34.2,
+  "hip": 97.0,
+  "musclePercentage": 39.8,
+  "fatPercentage": 25.0
+}

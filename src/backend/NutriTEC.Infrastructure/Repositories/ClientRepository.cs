@@ -15,6 +15,12 @@ public class ClientRepository : IClientRepository
         _dbContext = dbContext;
     }
 
+    public Task<bool> ExistsByIdAsync(int clientId, CancellationToken cancellationToken)
+    {
+        // Client-scoped features use this lightweight check before touching dependent tables.
+        return _dbContext.Clients.AnyAsync(client => client.ClientId == clientId, cancellationToken);
+    }
+
     public async Task RegisterClientAsync(
         User user,
         Client client,

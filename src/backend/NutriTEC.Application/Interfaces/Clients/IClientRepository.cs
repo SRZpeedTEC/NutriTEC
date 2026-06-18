@@ -4,6 +4,9 @@ namespace NutriTEC.Application.Interfaces.Clients;
 
 public interface IClientRepository
 {
+    // Feature workflows use client existence checks before operating on related records.
+    Task<bool> ExistsByIdAsync(int clientId, CancellationToken cancellationToken);
+
     // The repository persists the user, client profile, and initial measurement as one registration unit.
     Task RegisterClientAsync(
         User user,
