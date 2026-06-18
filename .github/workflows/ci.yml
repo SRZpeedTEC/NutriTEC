@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore backend
+        run: dotnet restore src/backend/NutriTEC.sln /p:RestoreUseStaticGraphEvaluation=true
+
+      - name: Build backend
+        run: dotnet build src/backend/NutriTEC.sln --configuration Release --no-restore /m:1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        working-directory: src/frontend/nutritec-web
+        run: npm install
+
+      - name: Build frontend
+        working-directory: src/frontend/nutritec-web
+        run: npm run build

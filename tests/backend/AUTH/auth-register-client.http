@@ -1,0 +1,85 @@
+@baseUrl = http://localhost:5024
+
+### Register client successfully
+POST {{baseUrl}}/api/auth/register/client
+Content-Type: application/json
+
+{
+  "name": "Maria",
+  "lastName": "Rodriguez",
+  "birthday": "1995-05-12",
+  "country": "Costa Rica",
+  "bodyWeight": 68.5,
+  "bodyMassIndex": 23.4,
+  "waist": 74.2,
+  "neck": 34.1,
+  "hip": 96.7,
+  "musclePercentage": 39.5,
+  "fatPercentage": 24.8,
+  "maxDailyCalories": 2100,
+  "email": "maria.rodriguez@example.com",
+  "password": "SecurePass123"
+}
+
+### Reject duplicated email
+POST {{baseUrl}}/api/auth/register/client
+Content-Type: application/json
+
+{
+  "name": "Maria",
+  "lastName": "Rodriguez",
+  "birthday": "1995-05-12",
+  "country": "Costa Rica",
+  "bodyWeight": 68.5,
+  "bodyMassIndex": 23.4,
+  "waist": 74.2,
+  "neck": 34.1,
+  "hip": 96.7,
+  "musclePercentage": 39.5,
+  "fatPercentage": 24.8,
+  "maxDailyCalories": 2100,
+  "email": "maria.rodriguez@example.com",
+  "password": "SecurePass123"
+}
+
+### Reject invalid body composition percentages
+POST {{baseUrl}}/api/auth/register/client
+Content-Type: application/json
+
+{
+  "name": "Carlos",
+  "lastName": "Mora",
+  "birthday": "1990-02-18",
+  "country": "Costa Rica",
+  "bodyWeight": 82.3,
+  "bodyMassIndex": 27.1,
+  "waist": 91.4,
+  "neck": 39.2,
+  "hip": 101.6,
+  "musclePercentage": 65,
+  "fatPercentage": 45,
+  "maxDailyCalories": 2400,
+  "email": "carlos.mora@example.com",
+  "password": "SecurePass123"
+}
+
+### Reject future birth date
+POST {{baseUrl}}/api/auth/register/client
+Content-Type: application/json
+
+{
+  "name": "Ana",
+  "lastName": "Soto",
+  "birthday": "2030-01-01",
+  "country": "Costa Rica",
+  "bodyWeight": 59.1,
+  "bodyMassIndex": 21.8,
+  "waist": 68.4,
+  "neck": 32.5,
+  "hip": 90.2,
+  "musclePercentage": 35,
+  "fatPercentage": 28,
+  "maxDailyCalories": 1900,
+  "email": "ana.soto@example.com",
+  "password": "SecurePass123"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "nutritec-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node -e \"console.log('NutriTEC mobile placeholder listo para configuracion futura.')\"",
+    "build": "node -e \"console.log('No hay build mobile configurado todavia.')\""
+  }
+}
