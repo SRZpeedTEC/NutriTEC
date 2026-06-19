@@ -9,7 +9,7 @@ GO
     Order:
       1. app_user
       2. admin, nutritionist, client
-      3. product, meal_time, user_plan, recipe
+      3. product, meal_time, nutrition_plan, recipe
       4. intermediate and dependent tables
 */
 
@@ -91,7 +91,7 @@ INSERT INTO product (
     bar_code,
     portion_unit,
     sodium,
-    status,
+    product_status,
     iron,
     calcium,
     vitamins,
@@ -108,8 +108,8 @@ VALUES
     ('P-0002', 'g', 1.00, 'ACTIVE', 0.80, 8.00, 6.00, 100.00, 95.00, 2.50, 20.00, 0.50, 'Fresh Berries', 2),
     ('P-0003', 'g', 60.00, 'ACTIVE', 1.50, 12.00, 2.00, 100.00, 165.00, 31.00, 0.00, 3.60, 'Grilled Chicken Breast', 3),
     ('P-0004', 'g', 5.00, 'ACTIVE', 2.80, 20.00, 3.00, 100.00, 120.00, 4.40, 21.30, 1.90, 'Brown Rice', 3),
-    ('P-0005', 'g', 7.00, 'ACTIVE', 1.00, 9.00, 5.00, 100.00, 160.00, 2.00, 8.50, 14.70, 'Avocado', 7),
-    ('P-0006', 'g', 70.00, 'ACTIVE', 2.10, 18.00, 2.50, 100.00, 208.00, 20.00, 0.00, 13.00, 'Salmon Fillet', 7);
+    ('P-0005', 'g', 7.00, 'ACTIVE', 1.00, 9.00, 5.00, 100.00, 160.00, 2.00, 8.50, 14.70, 'Avocado', 6),
+    ('P-0006', 'g', 70.00, 'ACTIVE', 2.10, 18.00, 2.50, 100.00, 208.00, 20.00, 0.00, 13.00, 'Salmon Fillet', 6);
 GO
 
 SET IDENTITY_INSERT meal_time ON;
@@ -125,14 +125,14 @@ VALUES
 SET IDENTITY_INSERT meal_time OFF;
 GO
 
-SET IDENTITY_INSERT user_plan ON;
+SET IDENTITY_INSERT nutrition_plan ON;
 
-INSERT INTO user_plan (plan_id, plan_name, total_calories, nutritionist_code)
+INSERT INTO nutrition_plan (plan_id, plan_name, total_calories, nutritionist_code)
 VALUES
     (1, 'Balanced Maintenance Plan', 1475.00, 1),
     (2, 'High Protein Training Plan', 1850.00, 2);
 
-SET IDENTITY_INSERT user_plan OFF;
+SET IDENTITY_INSERT nutrition_plan OFF;
 GO
 
 SET IDENTITY_INSERT recipe ON;
@@ -170,7 +170,7 @@ INSERT INTO plan_assignment (
     assignment_id,
     start_date,
     end_date,
-    status,
+    assignment_status,
     plan_id,
     client_id
 )
@@ -226,13 +226,13 @@ VALUES
 GO
 
 INSERT INTO measure (
-    measure_date,
+    measure_datetime,
     neck,
-    muscle,
-    weight,
+    muscle_percentage,
+    body_weight,
     hip,
     waist,
-    fat,
+    fat_percentage,
     body_mass_index,
     client_id
 )
