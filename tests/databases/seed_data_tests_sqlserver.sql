@@ -3,12 +3,13 @@ GO
 
 /*
     NutriTEC Database Project
-    Script: seed_data_tests.sql
-    Purpose: Provide sample queries that verify schema relationships and seed data.
+    Script: seed_data_tests_sqlserver.sql
+    Purpose: Provide read-only sample queries that verify schema relationships
+             and seed data.
 
     Notes:
-      - Run this script after 02_seed_data.sql.
-      - These are read-only verification queries.
+      - Run this script after database/sqlserver/seed/seed_data_sqlserver.sql.
+      - These queries match the SQL Server schema in database/sqlserver.
 */
 
 -- ============================================================================
@@ -46,7 +47,7 @@ SELECT
     CONCAT(cu.name, ' ', cu.last_name) AS client_name,
     nc.start_date,
     nc.end_date,
-    nc.relation_status
+    nc.status
 FROM nutritionist AS n
 JOIN app_user AS nu
     ON nu.user_id = n.user_id
@@ -68,7 +69,7 @@ SELECT
     p.total_calories,
     n.nutritionist_code,
     CONCAT(u.name, ' ', u.last_name) AS nutritionist_name
-FROM nutrition_plan AS p
+FROM user_plan AS p
 JOIN nutritionist AS n
     ON n.nutritionist_code = p.nutritionist_code
 JOIN app_user AS u
@@ -82,19 +83,22 @@ ORDER BY p.plan_id;
 SELECT
     p.plan_id,
     p.plan_name,
+    pmt.plan_meal_time_id,
     mt.meal_type,
     pr.bar_code,
     pr.product_name,
     mtp.quantity,
     mtp.calories AS contributed_calories
-FROM nutrition_plan AS p
+FROM user_plan AS p
+JOIN plan_meal_time AS pmt
+    ON pmt.plan_id = p.plan_id
 JOIN meal_time AS mt
-    ON mt.plan_id = p.plan_id
+    ON mt.meal_time_id = pmt.meal_time_id
 JOIN meal_time_product AS mtp
     ON mtp.meal_time_id = mt.meal_time_id
 JOIN product AS pr
     ON pr.bar_code = mtp.product_code
-ORDER BY p.plan_id, mt.meal_time_id, pr.product_name;
+ORDER BY p.plan_id, pmt.plan_meal_time_id, pr.product_name;
 
 -- ============================================================================
 -- 5. Calculate total calories per plan from products.
@@ -104,11 +108,11 @@ SELECT
     p.plan_id,
     p.plan_name,
     SUM(mtp.calories) AS calculated_total_calories
-FROM nutrition_plan AS p
-JOIN meal_time AS mt
-    ON mt.plan_id = p.plan_id
+FROM user_plan AS p
+JOIN plan_meal_time AS pmt
+    ON pmt.plan_id = p.plan_id
 JOIN meal_time_product AS mtp
-    ON mtp.meal_time_id = mt.meal_time_id
+    ON mtp.meal_time_id = pmt.meal_time_id
 GROUP BY p.plan_id, p.plan_name
 ORDER BY p.plan_id;
 
@@ -122,11 +126,11 @@ SELECT
     p.total_calories AS stored_total_calories,
     COALESCE(SUM(mtp.calories), 0) AS calculated_total_calories,
     p.total_calories - COALESCE(SUM(mtp.calories), 0) AS calorie_difference
-FROM nutrition_plan AS p
-LEFT JOIN meal_time AS mt
-    ON mt.plan_id = p.plan_id
+FROM user_plan AS p
+LEFT JOIN plan_meal_time AS pmt
+    ON pmt.plan_id = p.plan_id
 LEFT JOIN meal_time_product AS mtp
-    ON mtp.meal_time_id = mt.meal_time_id
+    ON mtp.meal_time_id = pmt.meal_time_id
 GROUP BY p.plan_id, p.plan_name, p.total_calories
 ORDER BY p.plan_id;
 
@@ -141,15 +145,15 @@ SELECT
     p.plan_name,
     pa.start_date,
     pa.end_date,
-    pa.assignment_status
+    pa.status
 FROM plan_assignment AS pa
 JOIN client AS c
     ON c.client_id = pa.client_id
 JOIN app_user AS u
     ON u.user_id = c.user_id
-JOIN nutrition_plan AS p
+JOIN user_plan AS p
     ON p.plan_id = pa.plan_id
-WHERE pa.assignment_status = 'ACTIVE'
+WHERE pa.status = 'ACTIVE'
 ORDER BY c.client_id, pa.start_date;
 
 -- ============================================================================
@@ -159,7 +163,6 @@ ORDER BY c.client_id, pa.start_date;
 SELECT
     r.recipe_id,
     CONCAT(u.name, ' ', u.last_name) AS client_name,
-    r.nutritional_values,
     pr.bar_code,
     pr.product_name
 FROM recipe AS r
@@ -180,11 +183,11 @@ ORDER BY r.recipe_id, pr.product_name;
 SELECT
     c.client_id,
     CONCAT(u.name, ' ', u.last_name) AS client_name,
-    m.measure_datetime,
-    m.body_weight,
+    m.measure_date,
+    m.weight,
     m.body_mass_index,
-    m.muscle_percentage,
-    m.fat_percentage,
+    m.muscle,
+    m.fat,
     m.neck,
     m.waist,
     m.hip
@@ -193,30 +196,36 @@ JOIN client AS c
     ON c.client_id = m.client_id
 JOIN app_user AS u
     ON u.user_id = c.user_id
-ORDER BY c.client_id, m.measure_datetime;
+ORDER BY c.client_id, m.measure_date;
 
 -- ============================================================================
--- 10. List daily consume records with client and meal time.
+-- 10. List daily consume records with client, meal time, and plan.
 -- ============================================================================
 
 SELECT
     dc.consume_date,
     c.client_id,
     CONCAT(u.name, ' ', u.last_name) AS client_name,
+    dmt.plan_meal_time_id,
     mt.meal_time_id,
     mt.meal_type,
     p.plan_name,
     dc.total_calories
 FROM daily_consume AS dc
+JOIN daily_meal_time AS dmt
+    ON dmt.consume_date = dc.consume_date
 JOIN client AS c
-    ON c.client_id = dc.client_id
+    ON c.client_id = dmt.client_id
 JOIN app_user AS u
     ON u.user_id = c.user_id
+JOIN plan_meal_time AS pmt
+    ON pmt.plan_meal_time_id = dmt.plan_meal_time_id
+JOIN user_plan AS p
+    ON p.plan_id = pmt.plan_id
 JOIN meal_time AS mt
-    ON mt.meal_time_id = dc.meal_time_id
-JOIN nutrition_plan AS p
-    ON p.plan_id = mt.plan_id
-ORDER BY dc.consume_date, c.client_id, mt.meal_time_id;
+    ON mt.meal_time_id = dmt.meal_time_id
+WHERE dc.client_id = dmt.client_id
+ORDER BY dc.consume_date, c.client_id, dmt.plan_meal_time_id;
 
 -- ============================================================================
 -- 11. Show products created by each user.
@@ -234,7 +243,7 @@ GROUP BY u.user_id, u.name, u.last_name
 ORDER BY u.user_id;
 
 -- ============================================================================
--- 12. Verify rows from many-to-many tables.
+-- 12. Verify rows from relationship and dependent tables.
 -- ============================================================================
 
 SELECT
@@ -254,4 +263,16 @@ SELECT
     CAST(nc.nutritionist_code AS VARCHAR(40)) AS parent_id,
     CAST(nc.client_id AS VARCHAR(40)) AS child_id
 FROM nutritionist_client AS nc
+UNION ALL
+SELECT
+    'plan_meal_time' AS relationship_table,
+    CAST(pmt.plan_id AS VARCHAR(40)) AS parent_id,
+    CAST(pmt.meal_time_id AS VARCHAR(40)) AS child_id
+FROM plan_meal_time AS pmt
+UNION ALL
+SELECT
+    'daily_meal_time' AS relationship_table,
+    CAST(dmt.consume_date AS VARCHAR(40)) AS parent_id,
+    CAST(dmt.plan_meal_time_id AS VARCHAR(40)) AS child_id
+FROM daily_meal_time AS dmt
 ORDER BY relationship_table, parent_id, child_id;
