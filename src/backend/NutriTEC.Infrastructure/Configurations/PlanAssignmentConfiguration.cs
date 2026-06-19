@@ -19,6 +19,12 @@ public class PlanAssignmentConfiguration : IEntityTypeConfiguration<PlanAssignme
         entity.Property(assignment => assignment.PlanId).HasColumnName("plan_id");
         entity.Property(assignment => assignment.ClientId).HasColumnName("client_id");
 
+        // The filtered unique index keeps historical assignments while enforcing one active plan per client.
+        entity.HasIndex(assignment => assignment.ClientId)
+            .IsUnique()
+            .HasFilter("[assignment_status] = 'ACTIVE'")
+            .HasDatabaseName("uq_plan_assignment_active_client");
+
         entity.HasOne(assignment => assignment.NutritionPlan)
             .WithMany(plan => plan.PlanAssignments)
             .HasForeignKey(assignment => assignment.PlanId)

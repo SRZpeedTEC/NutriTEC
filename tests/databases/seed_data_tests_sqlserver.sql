@@ -199,17 +199,15 @@ JOIN app_user AS u
 ORDER BY c.client_id, m.measure_datetime;
 
 -- ============================================================================
--- 10. List daily consume records with client, meal time, and plan.
+-- 10. List daily consume records with their client and meal time.
 -- ============================================================================
 
 SELECT
     dc.consume_date,
     c.client_id,
     CONCAT(u.name, ' ', u.last_name) AS client_name,
-    dmt.plan_meal_time_id,
     mt.meal_time_id,
     mt.meal_type,
-    p.plan_name,
     dc.total_calories
 FROM daily_consume AS dc
 JOIN daily_meal_time AS dmt
@@ -219,14 +217,10 @@ JOIN client AS c
     ON c.client_id = dmt.client_id
 JOIN app_user AS u
     ON u.user_id = c.user_id
-JOIN plan_meal_time AS pmt
-    ON pmt.plan_meal_time_id = dmt.plan_meal_time_id
-JOIN nutrition_plan AS p
-    ON p.plan_id = pmt.plan_id
 JOIN meal_time AS mt
     ON mt.meal_time_id = dmt.meal_time_id
 WHERE dc.client_id = dmt.client_id
-ORDER BY dc.consume_date, c.client_id, dmt.plan_meal_time_id;
+ORDER BY dc.consume_date, c.client_id, dmt.meal_time_id;
 
 -- ============================================================================
 -- 11. Show products created by each user.
@@ -274,6 +268,6 @@ UNION ALL
 SELECT
     'daily_meal_time' AS relationship_table,
     CONCAT(CAST(dmt.client_id AS VARCHAR(20)), ':', CONVERT(VARCHAR(10), dmt.consume_date, 23)) AS parent_id,
-    CAST(dmt.plan_meal_time_id AS VARCHAR(40)) AS child_id
+    CAST(dmt.meal_time_id AS VARCHAR(40)) AS child_id
 FROM daily_meal_time AS dmt
 ORDER BY relationship_table, parent_id, child_id;

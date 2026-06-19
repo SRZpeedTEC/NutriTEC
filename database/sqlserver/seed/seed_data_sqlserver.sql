@@ -25,16 +25,15 @@ INSERT INTO app_user (
     name,
     last_name,
     hash_password,
-    age,
     email
 )
 VALUES
-    (1, '1985-03-14', 'Andrea', 'Mora', 'hash_admin_001', 41, 'andrea.mora@nutritec.test'),
-    (2, '1989-07-22', 'Carlos', 'Vargas', 'hash_nutri_001', 36, 'carlos.vargas@nutritec.test'),
-    (3, '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 34, 'mariana.solis@nutritec.test'),
-    (4, '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 29, 'daniel.rojas@nutritec.test'),
-    (5, '1994-09-17', 'Sofia', 'Castro', 'hash_client_002', 31, 'sofia.castro@nutritec.test'),
-    (6, '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 37, 'luis.herrera@nutritec.test');
+    (1, '1985-03-14', 'Andrea', 'Mora', 'hash_admin_001', 'andrea.mora@nutritec.test'),
+    (2, '1989-07-22', 'Carlos', 'Vargas', 'hash_nutri_001', 'carlos.vargas@nutritec.test'),
+    (3, '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 'mariana.solis@nutritec.test'),
+    (4, '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 'daniel.rojas@nutritec.test'),
+    (5, '1994-09-17', 'Sofia', 'Castro', 'hash_client_002', 'sofia.castro@nutritec.test'),
+    (6, '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 'luis.herrera@nutritec.test');
 
 SET IDENTITY_INSERT app_user OFF;
 GO
@@ -257,18 +256,17 @@ VALUES
 GO
 
 INSERT INTO daily_meal_time (
-    plan_meal_time_id,
     client_id,
     consume_date,
     meal_time_id
 )
 VALUES
-    (1, 1, '2026-04-01', 1),
-    (2, 1, '2026-04-01', 2),
-    (3, 1, '2026-04-01', 3),
-    (4, 2, '2026-04-02', 4),
-    (5, 3, '2026-04-03', 1),
-    (6, 3, '2026-04-03', 2),
-    (7, 3, '2026-04-03', 3),
-    (8, 1, '2026-04-04', 4);
+    (1, '2026-04-01', 1),
+    (1, '2026-04-01', 2),
+    (1, '2026-04-01', 3),
+    (2, '2026-04-02', 4),
+    (3, '2026-04-03', 1),
+    (3, '2026-04-03', 2),
+    (3, '2026-04-03', 3),
+    (1, '2026-04-04', 4);
 GO

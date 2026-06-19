@@ -13,8 +13,6 @@ public class User
 
     public string HashPassword { get; set; } = string.Empty;
 
-    public int Age { get; set; }
-
     public string Email { get; set; } = string.Empty;
 
     public Client? Client { get; set; }

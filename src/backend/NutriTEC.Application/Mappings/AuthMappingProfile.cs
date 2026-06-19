@@ -12,7 +12,6 @@ public class AuthMappingProfile : Profile
         CreateMap<RegisterClientRequest, User>()
             .ForMember(destination => destination.UserId, options => options.Ignore())
             .ForMember(destination => destination.HashPassword, options => options.Ignore())
-            .ForMember(destination => destination.Age, options => options.Ignore())
             .ForMember(destination => destination.Client, options => options.Ignore());
 
         CreateMap<RegisterClientRequest, Client>()

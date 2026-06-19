@@ -43,7 +43,6 @@ public class AuthService : IAuthService
         // Mapping builds the domain objects while the service applies registration-specific decisions.
         var user = _mapper.Map<User>(request);
         user.HashPassword = _passwordHasher.HashPassword(request.Password);
-        user.Age = CalculateAge(request.Birthday);
 
         var client = _mapper.Map<Client>(request);
         var initialMeasure = _mapper.Map<Measure>(request);
@@ -146,19 +145,5 @@ public class AuthService : IAuthService
             EndDate = activePlanAssignment.EndDate,
             AssignmentStatus = activePlanAssignment.AssignmentStatus
         };
-    }
-
-    private static int CalculateAge(DateOnly birthday)
-    {
-        // Age is stored because the current SQL schema requires it alongside the birth date.
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var age = today.Year - birthday.Year;
-
-        if (birthday > today.AddYears(-age))
-        {
-            age--;
-        }
-
-        return age;
     }
 }

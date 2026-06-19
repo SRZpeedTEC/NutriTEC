@@ -22,7 +22,6 @@ CREATE TABLE app_user (
     name VARCHAR(80) NOT NULL,
     last_name VARCHAR(80) NOT NULL,
     hash_password VARCHAR(255) NOT NULL,
-    age INT NOT NULL,
     email VARCHAR(255) NOT NULL,
 
     CONSTRAINT pk_user PRIMARY KEY (user_id),
@@ -30,7 +29,6 @@ CREATE TABLE app_user (
     CONSTRAINT ck_user_name_not_blank CHECK (LTRIM(RTRIM(name)) <> ''),
     CONSTRAINT ck_user_last_name_not_blank CHECK (LTRIM(RTRIM(last_name)) <> ''),
     CONSTRAINT ck_user_hash_password_not_blank CHECK (LTRIM(RTRIM(hash_password)) <> ''),
-    CONSTRAINT ck_user_age_non_negative CHECK (age >= 0),
     CONSTRAINT ck_user_birthday_valid CHECK (birthday >= '1900-01-01' AND birthday <= CONVERT(DATE, GETDATE())),
     CONSTRAINT ck_user_email_not_blank CHECK (LTRIM(RTRIM(email)) <> ''),
     CONSTRAINT ck_user_email_format CHECK (email LIKE '%_@_%._%' AND email NOT LIKE '% %')
@@ -138,6 +136,12 @@ CREATE TABLE plan_assignment (
         assignment_status IN ('ACTIVE', 'PAUSED', 'FINISHED', 'CANCELLED')
     )
 );
+GO
+
+-- A filtered unique index preserves assignment history while allowing only one active plan per client.
+CREATE UNIQUE INDEX uq_plan_assignment_active_client
+ON plan_assignment (client_id)
+WHERE assignment_status = 'ACTIVE';
 GO
 
 CREATE TABLE meal_time (
@@ -267,7 +271,6 @@ GO
 
 CREATE TABLE daily_meal_time (
     daily_meal_time_id INT IDENTITY(1,1) NOT NULL,
-    plan_meal_time_id INT NOT NULL,
     client_id INT NOT NULL,
     consume_date DATE NOT NULL,
     meal_time_id INT NOT NULL,
@@ -386,12 +389,6 @@ ALTER TABLE daily_consume
 ADD CONSTRAINT FK_DAILY_CONSUME_CLIENT
 FOREIGN KEY (client_id)
 REFERENCES client (client_id);
-GO
-
-ALTER TABLE daily_meal_time
-ADD CONSTRAINT FK_DAILY_MEAL_TIME_PLAN_MEAL_TIME
-FOREIGN KEY (plan_meal_time_id)
-REFERENCES plan_meal_time (plan_meal_time_id);
 GO
 
 ALTER TABLE daily_meal_time
