@@ -11,6 +11,9 @@ public interface IProductRepository
 
     Task<Product?> GetByBarCodeAsync(string barCode, CancellationToken cancellationToken);
 
+    // Daily consumption searches expose only active products matching name or barcode.
+    Task<IReadOnlyCollection<Product>> SearchActiveAsync(string query, CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<Product>> GetPendingByUserIdAsync(int userId, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);

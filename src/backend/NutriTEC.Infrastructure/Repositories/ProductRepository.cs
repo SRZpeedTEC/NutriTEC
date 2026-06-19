@@ -33,6 +33,20 @@ public class ProductRepository : IProductRepository
         return _dbContext.Products.FirstOrDefaultAsync(product => product.BarCode == barCode, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Product>> SearchActiveAsync(
+        string query,
+        CancellationToken cancellationToken)
+    {
+        // Selection searches are restricted to active products and match either user-facing identifier.
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(product => product.ProductStatus == ProductStatus.Active)
+            .Where(product => product.ProductName.Contains(query) || product.BarCode.Contains(query))
+            .OrderBy(product => product.ProductName)
+            .ThenBy(product => product.BarCode)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<Product>> GetPendingByUserIdAsync(
         int userId,
         CancellationToken cancellationToken)

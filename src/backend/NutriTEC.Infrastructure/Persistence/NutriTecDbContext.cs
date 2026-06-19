@@ -22,6 +22,16 @@ public class NutriTecDbContext : DbContext
 
     public DbSet<Product> Products => Set<Product>();
 
+    public DbSet<MealTime> MealTimes => Set<MealTime>();
+
+    public DbSet<MealTimeProduct> MealTimeProducts => Set<MealTimeProduct>();
+
+    public DbSet<DailyConsume> DailyConsumes => Set<DailyConsume>();
+
+    public DbSet<DailyMealTime> DailyMealTimes => Set<DailyMealTime>();
+
+    public DbSet<DailyConsumeDetail> DailyConsumeDetails => Set<DailyConsumeDetail>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Entity configurations are kept in dedicated classes to keep the DbContext focused on persistence setup.

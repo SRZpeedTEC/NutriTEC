@@ -6,6 +6,9 @@ GO
     Script: seed_data_sqlserver.sql
     Purpose: Insert seed data in foreign-key-safe order.
 
+    Prerequisites:
+      - Run the schema, view, and trigger scripts before this seed script.
+
     Order:
       1. app_user
       2. admin, nutritionist, client
@@ -115,11 +118,30 @@ SET IDENTITY_INSERT meal_time ON;
 
 INSERT INTO meal_time (meal_time_id, meal_type)
 VALUES
+    -- IDs 1-5 are stable templates used by clients to select a meal type.
     (1, 'BREAKFAST'),
     (2, 'LUNCH'),
     (3, 'DINNER'),
     (4, 'SNACK'),
-    (5, 'OTHER');
+    (5, 'OTHER'),
+    -- IDs 6-13 isolate each nutrition plan's product collection by meal type.
+    (6, 'BREAKFAST'),
+    (7, 'LUNCH'),
+    (8, 'DINNER'),
+    (9, 'SNACK'),
+    (10, 'BREAKFAST'),
+    (11, 'LUNCH'),
+    (12, 'DINNER'),
+    (13, 'SNACK'),
+    -- IDs 14-21 isolate every seeded client, date, and meal-type consumption.
+    (14, 'BREAKFAST'),
+    (15, 'LUNCH'),
+    (16, 'DINNER'),
+    (17, 'SNACK'),
+    (18, 'BREAKFAST'),
+    (19, 'LUNCH'),
+    (20, 'DINNER'),
+    (21, 'SNACK');
 
 SET IDENTITY_INSERT meal_time OFF;
 GO
@@ -186,14 +208,14 @@ SET IDENTITY_INSERT plan_meal_time ON;
 
 INSERT INTO plan_meal_time (plan_meal_time_id, meal_time_id, plan_id)
 VALUES
-    (1, 1, 1),
-    (2, 2, 1),
-    (3, 3, 1),
-    (4, 4, 1),
-    (5, 1, 2),
-    (6, 2, 2),
-    (7, 3, 2),
-    (8, 4, 2);
+    (1, 6, 1),
+    (2, 7, 1),
+    (3, 8, 1),
+    (4, 9, 1),
+    (5, 10, 2),
+    (6, 11, 2),
+    (7, 12, 2),
+    (8, 13, 2);
 
 SET IDENTITY_INSERT plan_meal_time OFF;
 GO
@@ -215,13 +237,39 @@ INSERT INTO meal_time_product (
     quantity
 )
 VALUES
-    (1, 'P-0001', 180.00, 1.50),
-    (1, 'P-0002', 95.00, 1.00),
-    (2, 'P-0003', 330.00, 2.00),
-    (2, 'P-0004', 240.00, 2.00),
-    (3, 'P-0006', 416.00, 2.00),
-    (3, 'P-0005', 160.00, 1.00),
-    (4, 'P-0002', 54.00, 0.57);
+    -- Plan 1 details sum to its stored total of 1475 calories.
+    (6, 'P-0001', 180.00, 1.50),
+    (6, 'P-0002', 95.00, 1.00),
+    (7, 'P-0003', 330.00, 2.00),
+    (7, 'P-0004', 240.00, 2.00),
+    (8, 'P-0006', 416.00, 2.00),
+    (8, 'P-0005', 160.00, 1.00),
+    (9, 'P-0002', 54.00, 0.57),
+    -- Plan 2 details use separate meal-time instances and sum to 1850 calories.
+    (10, 'P-0001', 240.00, 2.00),
+    (10, 'P-0002', 190.00, 2.00),
+    (11, 'P-0003', 495.00, 3.00),
+    (11, 'P-0004', 360.00, 3.00),
+    (12, 'P-0006', 416.00, 2.00),
+    (13, 'P-0001', 8.40, 0.07),
+    (13, 'P-0002', 140.60, 1.48),
+    -- Daily details remain isolated while matching every seeded daily total.
+    (14, 'P-0001', 180.00, 1.50),
+    (14, 'P-0002', 95.00, 1.00),
+    (15, 'P-0003', 330.00, 2.00),
+    (15, 'P-0004', 240.00, 2.00),
+    (16, 'P-0006', 416.00, 2.00),
+    (16, 'P-0005', 160.00, 1.00),
+    (17, 'P-0005', 800.00, 5.00),
+    (18, 'P-0001', 240.00, 2.00),
+    (18, 'P-0002', 190.00, 2.00),
+    (19, 'P-0003', 495.00, 3.00),
+    (19, 'P-0004', 360.00, 3.00),
+    (20, 'P-0003', 165.00, 1.00),
+    (20, 'P-0001', 21.60, 0.18),
+    (20, 'P-0002', 258.40, 2.72),
+    (21, 'P-0001', 180.00, 1.50),
+    (21, 'P-0002', 95.00, 1.00);
 GO
 
 INSERT INTO measure (
@@ -261,12 +309,12 @@ INSERT INTO daily_meal_time (
     meal_time_id
 )
 VALUES
-    (1, '2026-04-01', 1),
-    (1, '2026-04-01', 2),
-    (1, '2026-04-01', 3),
-    (2, '2026-04-02', 4),
-    (3, '2026-04-03', 1),
-    (3, '2026-04-03', 2),
-    (3, '2026-04-03', 3),
-    (1, '2026-04-04', 4);
+    (1, '2026-04-01', 14),
+    (1, '2026-04-01', 15),
+    (1, '2026-04-01', 16),
+    (2, '2026-04-02', 17),
+    (3, '2026-04-03', 18),
+    (3, '2026-04-03', 19),
+    (3, '2026-04-03', 20),
+    (1, '2026-04-04', 21);
 GO
