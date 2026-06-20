@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<DeleteProductRequest>, DeleteProductRequestValidator>();
         services.AddScoped<IValidator<CreateMeasurementRequest>, CreateMeasurementRequestValidator>();
         services.AddScoped<IValidator<UpdateMeasurementRequest>, UpdateMeasurementRequestValidator>();
+        services.AddScoped<IValidator<MeasurementReportRequest>, MeasurementReportRequestValidator>();
         services.AddScoped<IValidator<SearchDailyProductRequest>, SearchDailyProductRequestValidator>();
         services.AddScoped<IValidator<AddDailyProductRequest>, AddDailyProductRequestValidator>();
         services.AddScoped<IValidator<UpdateDailyProductRequest>, UpdateDailyProductRequestValidator>();

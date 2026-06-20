@@ -7,7 +7,8 @@ GO
     Purpose: Insert seed data in foreign-key-safe order.
 
     Prerequisites:
-      - Run the schema, both view scripts, and all trigger scripts before this seed script.
+      - Run create_schema_sqlserver.sql and
+        create_programmability_objects_sqlserver.sql before this seed script.
 
     Order:
       1. app_user

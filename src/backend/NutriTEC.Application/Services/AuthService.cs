@@ -46,7 +46,7 @@ public class AuthService : IAuthService
 
         var client = _mapper.Map<Client>(request);
         var initialMeasure = _mapper.Map<Measure>(request);
-        initialMeasure.MeasureDateTime = DateTime.UtcNow;
+        initialMeasure.MeasureDateTime = DateTime.Today;
 
         // The repository persists the related records in one transaction to avoid partial registrations.
         await _clientRepository.RegisterClientAsync(user, client, initialMeasure, cancellationToken);
@@ -102,6 +102,7 @@ public class AuthService : IAuthService
         {
             UserId = user.UserId,
             ClientId = client.ClientId,
+            Age = user.Age,
             Email = user.Email,
             FullName = $"{user.Name} {user.LastName}",
             Message = "Cliente registrado correctamente."
@@ -118,6 +119,7 @@ public class AuthService : IAuthService
         {
             UserId = user.UserId,
             ClientId = client.ClientId,
+            Age = user.Age,
             Email = user.Email,
             FullName = $"{user.Name} {user.LastName}",
             AccountType = "Client",

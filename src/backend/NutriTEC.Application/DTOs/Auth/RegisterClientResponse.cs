@@ -7,6 +7,8 @@ public class RegisterClientResponse
 
     public int ClientId { get; set; }
 
+    public int Age { get; set; }
+
     public string Email { get; set; } = string.Empty;
 
     public string FullName { get; set; } = string.Empty;

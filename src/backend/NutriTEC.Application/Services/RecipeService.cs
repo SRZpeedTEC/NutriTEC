@@ -236,6 +236,17 @@ public class RecipeService : IRecipeService
             ClientId = first.ClientId,
             RecipeName = first.RecipeName,
             TotalCalories = first.TotalCalories,
+            NutritionTotals = new RecipeNutritionTotalsResponse
+            {
+                Calories = details.Sum(detail => detail.CalculatedCalories),
+                Fat = details.Sum(detail => detail.CalculatedFat),
+                Sodium = details.Sum(detail => detail.CalculatedSodium),
+                Carbohydrates = details.Sum(detail => detail.CalculatedCarbohydrates),
+                Protein = details.Sum(detail => detail.CalculatedProtein),
+                Vitamins = details.Sum(detail => detail.CalculatedVitamins),
+                Calcium = details.Sum(detail => detail.CalculatedCalcium),
+                Iron = details.Sum(detail => detail.CalculatedIron)
+            },
             Products = details.Select(detail => new RecipeIngredientResponse
             {
                 BarCode = detail.BarCode,

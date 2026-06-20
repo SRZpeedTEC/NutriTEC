@@ -11,5 +11,7 @@ public class RecipeDetailResponse
 
     public decimal TotalCalories { get; set; }
 
+    public RecipeNutritionTotalsResponse NutritionTotals { get; set; } = new();
+
     public IReadOnlyCollection<RecipeIngredientResponse> Products { get; set; } = Array.Empty<RecipeIngredientResponse>();
 }

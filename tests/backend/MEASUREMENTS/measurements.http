@@ -3,6 +3,8 @@
 @measurementDate = 2026-06-17
 @olderMeasurementDate = 2026-06-01
 @missingMeasurementDate = 2026-05-15
+@reportStartDate = 2026-01-01
+@reportEndDate = 2026-03-31
 
 ### Register measurements successfully
 POST {{baseUrl}}/api/measurements
@@ -86,6 +88,15 @@ Content-Type: application/json
 
 ### Get measurement history for a client
 GET {{baseUrl}}/api/measurements/client/{{clientId}}
+
+### Get measurement report data for an inclusive date range
+GET {{baseUrl}}/api/measurements/report/{{clientId}}?startDate={{reportStartDate}}&endDate={{reportEndDate}}
+
+### Try to get a report with an inverted date range
+GET {{baseUrl}}/api/measurements/report/{{clientId}}?startDate=2026-04-01&endDate=2026-03-01
+
+### Try to get a report with a future final date
+GET {{baseUrl}}/api/measurements/report/{{clientId}}?startDate={{reportStartDate}}&endDate=2099-01-01
 
 ### Edit the most recent measurement successfully
 PUT {{baseUrl}}/api/measurements/{{clientId}}/{{measurementDate}}

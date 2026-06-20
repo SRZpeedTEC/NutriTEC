@@ -18,4 +18,8 @@ public interface IMeasurementService
     Task<IReadOnlyCollection<MeasurementResponse>> GetClientHistoryAsync(
         int clientId,
         CancellationToken cancellationToken);
+
+    Task<MeasurementReportResponse> GetReportAsync(
+        MeasurementReportRequest request,
+        CancellationToken cancellationToken);
 }

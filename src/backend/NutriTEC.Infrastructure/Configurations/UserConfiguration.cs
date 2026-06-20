@@ -14,6 +14,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         entity.Property(user => user.UserId).HasColumnName("user_id");
         entity.Property(user => user.Birthday).HasColumnName("birthday").HasColumnType("date");
+        entity.Ignore(user => user.Age);
         entity.Property(user => user.Name).HasColumnName("name").HasMaxLength(80).IsUnicode(false);
         entity.Property(user => user.LastName).HasColumnName("last_name").HasMaxLength(80).IsUnicode(false);
         entity.Property(user => user.HashPassword).HasColumnName("hash_password").HasMaxLength(255).IsUnicode(false);

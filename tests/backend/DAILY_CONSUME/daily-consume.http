@@ -6,7 +6,7 @@
 @approvedBarCode = P-0001
 @pendingBarCode = NT-DAILY-PENDING-001
 
-# Prerequisite: run the schema, vw_daily_consume_detail, both daily-consume triggers, and seed scripts in that order.
+# Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
 # These stateful scenarios assume a freshly seeded database; the first API-created meal_time receives ID 22.
 
 ### Search approved products by name

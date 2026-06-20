@@ -5,7 +5,7 @@
 @mealTimeTemplateId = 2
 @pendingBarCode = NT-RECIPE-PENDING-001
 
-# Prerequisite: run the schema, both views, all three triggers, and seed scripts in the documented order.
+# Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
 # Stateful success scenarios assume a freshly seeded database, so the first API-created recipe receives ID 4.
 
 ### Create a recipe successfully

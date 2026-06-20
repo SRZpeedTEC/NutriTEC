@@ -27,6 +27,12 @@ public interface IMeasurementRepository
         int clientId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<Measure>> GetByClientIdAndRangeAsync(
+        int clientId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken);
+
     Task AddAsync(Measure measure, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);

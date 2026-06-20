@@ -110,6 +110,37 @@ public class MeasurementService : IMeasurementService
         return measures.Select(measure => _mapper.Map<MeasurementResponse>(measure)).ToList();
     }
 
+    public async Task<MeasurementReportResponse> GetReportAsync(
+        MeasurementReportRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Report data is restricted to the requested client and inclusive date range for frontend rendering.
+        if (!await _clientRepository.ExistsByIdAsync(request.ClientId, cancellationToken))
+        {
+            throw new NotFoundException("No se encontro el cliente solicitado.");
+        }
+
+        var startDate = request.StartDate.Date;
+        var endDate = request.EndDate.Date;
+        var measures = await _measurementRepository.GetByClientIdAndRangeAsync(
+            request.ClientId,
+            startDate,
+            endDate,
+            cancellationToken);
+        var measurementResponses = measures
+            .Select(measure => _mapper.Map<MeasurementResponse>(measure))
+            .ToList();
+
+        return new MeasurementReportResponse
+        {
+            ClientId = request.ClientId,
+            StartDate = startDate,
+            EndDate = endDate,
+            RecordCount = measurementResponses.Count,
+            Measurements = measurementResponses
+        };
+    }
+
     private async Task ValidateMeasurementDateIsAllowedAsync(
         int clientId,
         DateTime measurementDate,
