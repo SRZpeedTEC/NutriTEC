@@ -13,6 +13,12 @@ public interface IDailyConsumeService
         AddDailyProductRequest request,
         CancellationToken cancellationToken);
 
+    Task<DailyConsumeMutationResponse> AddProductBatchAsync(
+        int clientId,
+        int mealTimeId,
+        IReadOnlyCollection<DailyProductBatchItem> products,
+        CancellationToken cancellationToken);
+
     Task<DailyConsumeMutationResponse> UpdateProductAsync(
         int mealTimeId,
         string productCode,

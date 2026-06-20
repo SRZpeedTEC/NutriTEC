@@ -11,6 +11,11 @@ public interface IProductRepository
 
     Task<Product?> GetByBarCodeAsync(string barCode, CancellationToken cancellationToken);
 
+    // Recipe workflows validate complete ingredient sets with one batch lookup.
+    Task<IReadOnlyCollection<Product>> GetByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken);
+
     // Daily consumption searches expose only active products matching name or barcode.
     Task<IReadOnlyCollection<Product>> SearchActiveAsync(string query, CancellationToken cancellationToken);
 

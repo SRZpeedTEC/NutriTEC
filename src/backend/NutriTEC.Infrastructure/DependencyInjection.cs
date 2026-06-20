@@ -6,6 +6,7 @@ using NutriTEC.Application.Interfaces.Clients;
 using NutriTEC.Application.Interfaces.DailyConsume;
 using NutriTEC.Application.Interfaces.Measurements;
 using NutriTEC.Application.Interfaces.Products;
+using NutriTEC.Application.Interfaces.Recipes;
 using NutriTEC.Application.Interfaces.Users;
 using NutriTEC.Infrastructure.Persistence;
 using NutriTEC.Infrastructure.Repositories;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IMeasurementRepository, MeasurementRepository>();
         services.AddScoped<IDailyConsumeRepository, DailyConsumeRepository>();
+        services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;

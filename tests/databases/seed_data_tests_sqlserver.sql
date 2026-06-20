@@ -162,9 +162,12 @@ ORDER BY c.client_id, pa.start_date;
 
 SELECT
     r.recipe_id,
+    r.recipe_name,
+    r.total_calories,
     CONCAT(u.name, ' ', u.last_name) AS client_name,
     pr.bar_code,
-    pr.product_name
+    pr.product_name,
+    rp.quantity
 FROM recipe AS r
 JOIN client AS c
     ON c.client_id = r.client_id

@@ -33,6 +33,17 @@ public class ProductRepository : IProductRepository
         return _dbContext.Products.FirstOrDefaultAsync(product => product.BarCode == barCode, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Product>> GetByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken)
+    {
+        // Batch lookup lets recipe workflows validate every ingredient with one database query.
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(product => barCodes.Contains(product.BarCode))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<Product>> SearchActiveAsync(
         string query,
         CancellationToken cancellationToken)

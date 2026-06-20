@@ -139,11 +139,11 @@ public class DailyConsumeRepository : IDailyConsumeRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task AddProductAsync(
+    public async Task AddProductsAsync(
         DailyConsumeEntity? newDailyConsume,
         MealTime? newMealTime,
         DailyMealTime? newDailyMealTime,
-        MealTimeProduct detail,
+        IReadOnlyCollection<MealTimeProduct> details,
         CancellationToken cancellationToken)
     {
         // Two ordered saves ensure the trigger can see daily_meal_time while one transaction prevents partial data.
@@ -167,7 +167,7 @@ public class DailyConsumeRepository : IDailyConsumeRepository
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
-            await _dbContext.MealTimeProducts.AddAsync(detail, cancellationToken);
+            await _dbContext.MealTimeProducts.AddRangeAsync(details, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }

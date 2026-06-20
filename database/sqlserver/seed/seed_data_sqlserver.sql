@@ -7,7 +7,7 @@ GO
     Purpose: Insert seed data in foreign-key-safe order.
 
     Prerequisites:
-      - Run the schema, view, and trigger scripts before this seed script.
+      - Run the schema, both view scripts, and all trigger scripts before this seed script.
 
     Order:
       1. app_user
@@ -158,11 +158,11 @@ GO
 
 SET IDENTITY_INSERT recipe ON;
 
-INSERT INTO recipe (recipe_id, client_id)
+INSERT INTO recipe (recipe_id, recipe_name, total_calories, client_id)
 VALUES
-    (1, 1),
-    (2, 2),
-    (3, 3);
+    (1, 'Berry Yogurt Bowl', 0, 1),
+    (2, 'Chicken Rice Bowl', 0, 2),
+    (3, 'Salmon Avocado Plate', 0, 3);
 
 SET IDENTITY_INSERT recipe OFF;
 GO
@@ -220,14 +220,14 @@ VALUES
 SET IDENTITY_INSERT plan_meal_time OFF;
 GO
 
-INSERT INTO recipe_product (recipe_id, product_code)
+INSERT INTO recipe_product (recipe_id, product_code, quantity)
 VALUES
-    (1, 'P-0001'),
-    (1, 'P-0002'),
-    (2, 'P-0003'),
-    (2, 'P-0004'),
-    (3, 'P-0005'),
-    (3, 'P-0006');
+    (1, 'P-0001', 1.50),
+    (1, 'P-0002', 1.00),
+    (2, 'P-0003', 2.00),
+    (2, 'P-0004', 2.00),
+    (3, 'P-0005', 1.00),
+    (3, 'P-0006', 2.00);
 GO
 
 INSERT INTO meal_time_product (

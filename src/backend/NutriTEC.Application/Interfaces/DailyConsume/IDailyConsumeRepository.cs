@@ -42,11 +42,11 @@ public interface IDailyConsumeRepository
         DateOnly date,
         CancellationToken cancellationToken);
 
-    Task AddProductAsync(
+    Task AddProductsAsync(
         DailyConsumeEntity? newDailyConsume,
         MealTime? newMealTime,
         DailyMealTime? newDailyMealTime,
-        MealTimeProduct detail,
+        IReadOnlyCollection<MealTimeProduct> details,
         CancellationToken cancellationToken);
 
     void DeleteMealTimeProduct(MealTimeProduct detail);

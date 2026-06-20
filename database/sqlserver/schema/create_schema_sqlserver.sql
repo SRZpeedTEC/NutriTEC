@@ -171,9 +171,13 @@ GO
 
 CREATE TABLE recipe (
     recipe_id INT IDENTITY(1,1) NOT NULL,
+    recipe_name VARCHAR(120) NOT NULL,
+    total_calories NUMERIC(10, 2) NOT NULL DEFAULT 0,
     client_id INT NOT NULL,
 
-    CONSTRAINT pk_recipe PRIMARY KEY (recipe_id)
+    CONSTRAINT pk_recipe PRIMARY KEY (recipe_id),
+    CONSTRAINT ck_recipe_name_not_blank CHECK (LTRIM(RTRIM(recipe_name)) <> ''),
+    CONSTRAINT ck_recipe_total_calories_non_negative CHECK (total_calories >= 0)
 );
 GO
 
@@ -215,8 +219,10 @@ GO
 CREATE TABLE recipe_product (
     recipe_id INT NOT NULL,
     product_code VARCHAR(40) NOT NULL,
+    quantity NUMERIC(10, 2) NOT NULL,
 
-    CONSTRAINT pk_recipe_product PRIMARY KEY (recipe_id, product_code)
+    CONSTRAINT pk_recipe_product PRIMARY KEY (recipe_id, product_code),
+    CONSTRAINT ck_recipe_product_quantity_positive CHECK (quantity > 0)
 );
 GO
 

@@ -51,100 +51,34 @@ public class DailyConsumeService : IDailyConsumeService
         AddDailyProductRequest request,
         CancellationToken cancellationToken)
     {
-        // Add validates all referenced records before creating any part of today's consumption graph.
-        request.ProductCode = request.ProductCode.Trim();
-        await EnsureClientExistsAsync(request.ClientId, cancellationToken);
-
-        var templateMealTime = await _dailyConsumeRepository.GetMealTimeByIdAsync(
+        // Single-product additions share the same atomic workflow used by recipe expansion.
+        return await AddProductsCoreAsync(
+            request.ClientId,
             request.MealTimeId,
-            cancellationToken);
-
-        if (templateMealTime is null)
-        {
-            throw new NotFoundException("No se encontro el horario de comida solicitado.");
-        }
-
-        var product = await GetApprovedProductAsync(request.ProductCode, cancellationToken);
-        var today = GetToday();
-        var dailyConsume = await _dailyConsumeRepository.GetDailyConsumeAsync(
-            request.ClientId,
-            today,
-            cancellationToken);
-        var dailyMealTime = await _dailyConsumeRepository.GetDailyMealTimeByTypeAsync(
-            request.ClientId,
-            today,
-            templateMealTime.MealType,
-            cancellationToken);
-            
-        DailyConsumeEntity? newDailyConsume = null;
-        MealTime? newMealTime = null;
-        DailyMealTime? newDailyMealTime = null;
-
-        if (dailyMealTime is not null)
-        {
-            var existingDetail = await _dailyConsumeRepository.GetConsumedProductAsync(
-                request.ClientId,
-                dailyMealTime.MealTimeId,
-                request.ProductCode,
-                cancellationToken);
-
-            if (existingDetail is not null)
+            new[]
             {
-                throw new ConflictException("El producto ya fue agregado a este horario de comida hoy.");
-            }
-        }
-
-        // A new meal_time row isolates this client's detail collection without changing the database schema.
-        if (dailyConsume is null)
-        {
-            dailyConsume = new DailyConsumeEntity
-            {
-                ClientId = request.ClientId,
-                ConsumeDate = today,
-                TotalCalories = 0
-            };
-            newDailyConsume = dailyConsume;
-        }
-
-        if (dailyMealTime is null)
-        {
-            var scopedMealTime = new MealTime
-            {
-                MealType = templateMealTime.MealType
-            };
-
-            dailyMealTime = new DailyMealTime
-            {
-                ClientId = request.ClientId,
-                ConsumeDate = today,
-                DailyConsume = dailyConsume,
-                MealTime = scopedMealTime
-            };
-            newMealTime = scopedMealTime;
-            newDailyMealTime = dailyMealTime;
-        }
-
-        var detail = new MealTimeProduct
-        {
-            MealTime = dailyMealTime.MealTime,
-            ProductCode = product.BarCode,
-            Quantity = request.Quantity,
-            Calories = CalculateCalories(product.Calories, request.Quantity)
-        };
-
-        await _dailyConsumeRepository.AddProductAsync(
-            newDailyConsume,
-            newMealTime,
-            newDailyMealTime,
-            detail,
-            cancellationToken);
-
-        return await CreateMutationResponseAsync(
+                new DailyProductBatchItem
+                {
+                    ProductCode = request.ProductCode,
+                    Quantity = request.Quantity
+                }
+            },
             "Producto agregado al consumo diario.",
-            request.ClientId,
-            today,
-            dailyMealTime.MealTimeId,
-            dailyMealTime.MealTime.MealType,
+            cancellationToken);
+    }
+
+    public Task<DailyConsumeMutationResponse> AddProductBatchAsync(
+        int clientId,
+        int mealTimeId,
+        IReadOnlyCollection<DailyProductBatchItem> products,
+        CancellationToken cancellationToken)
+    {
+        // Recipe expansion enters daily consumption through one all-or-nothing batch operation.
+        return AddProductsCoreAsync(
+            clientId,
+            mealTimeId,
+            products,
+            "Receta agregada al consumo diario.",
             cancellationToken);
     }
 
@@ -219,24 +153,132 @@ public class DailyConsumeService : IDailyConsumeService
         return await CreateTodayResponseAsync(clientId, GetToday(), cancellationToken);
     }
 
-    private async Task<Product> GetApprovedProductAsync(
-        string productCode,
+    private async Task<DailyConsumeMutationResponse> AddProductsCoreAsync(
+        int clientId,
+        int mealTimeId,
+        IReadOnlyCollection<DailyProductBatchItem> requestedProducts,
+        string successMessage,
         CancellationToken cancellationToken)
     {
-        // Product existence and approval are distinct errors so the frontend can guide selection correctly.
-        var product = await _productRepository.GetByBarCodeAsync(productCode, cancellationToken);
+        // Shared validation prevents partial recipe expansion and keeps direct additions behaviorally identical.
+        await EnsureClientExistsAsync(clientId, cancellationToken);
 
-        if (product is null)
+        if (requestedProducts.Count == 0)
         {
-            throw new NotFoundException("No se encontro el producto solicitado.");
+            throw new ConflictException("No hay productos disponibles para agregar al consumo diario.");
         }
 
-        if (product.ProductStatus != ProductStatus.Active)
+        var normalizedProducts = requestedProducts
+            .Select(item => new DailyProductBatchItem
+            {
+                ProductCode = item.ProductCode.Trim(),
+                Quantity = item.Quantity
+            })
+            .ToList();
+        var duplicatedCode = normalizedProducts
+            .GroupBy(item => item.ProductCode, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1)?.Key;
+
+        if (duplicatedCode is not null)
         {
-            throw new ConflictException("El producto no esta aprobado para consumo.");
+            throw new ConflictException("No se pueden agregar productos duplicados en una misma operacion.");
         }
 
-        return product;
+        var templateMealTime = await _dailyConsumeRepository.GetMealTimeByIdAsync(
+            mealTimeId,
+            cancellationToken) ?? throw new NotFoundException("No se encontro el horario de comida solicitado.");
+        var productCodes = normalizedProducts.Select(item => item.ProductCode).ToList();
+        var products = await _productRepository.GetByBarCodesAsync(productCodes, cancellationToken);
+
+        if (products.Count != productCodes.Count)
+        {
+            throw new NotFoundException("Uno o mas productos no fueron encontrados.");
+        }
+
+        if (products.Any(product => product.ProductStatus != ProductStatus.Active))
+        {
+            throw new ConflictException("Todos los productos deben estar aprobados para consumo.");
+        }
+
+        var productByCode = products.ToDictionary(product => product.BarCode, StringComparer.OrdinalIgnoreCase);
+        var today = GetToday();
+        var dailyConsume = await _dailyConsumeRepository.GetDailyConsumeAsync(clientId, today, cancellationToken);
+        var dailyMealTime = await _dailyConsumeRepository.GetDailyMealTimeByTypeAsync(
+            clientId,
+            today,
+            templateMealTime.MealType,
+            cancellationToken);
+
+        if (dailyMealTime is not null)
+        {
+            foreach (var item in normalizedProducts)
+            {
+                var existingDetail = await _dailyConsumeRepository.GetConsumedProductAsync(
+                    clientId,
+                    dailyMealTime.MealTimeId,
+                    item.ProductCode,
+                    cancellationToken);
+
+                if (existingDetail is not null)
+                {
+                    throw new ConflictException(
+                        $"El producto {item.ProductCode} ya fue agregado a este horario de comida hoy.");
+                }
+            }
+        }
+
+        DailyConsumeEntity? newDailyConsume = null;
+        MealTime? newMealTime = null;
+        DailyMealTime? newDailyMealTime = null;
+
+        // A scoped meal-time instance prevents recipe ingredients from leaking into plans or other clients.
+        if (dailyConsume is null)
+        {
+            dailyConsume = new DailyConsumeEntity
+            {
+                ClientId = clientId,
+                ConsumeDate = today,
+                TotalCalories = 0
+            };
+            newDailyConsume = dailyConsume;
+        }
+
+        if (dailyMealTime is null)
+        {
+            var scopedMealTime = new MealTime { MealType = templateMealTime.MealType };
+            dailyMealTime = new DailyMealTime
+            {
+                ClientId = clientId,
+                ConsumeDate = today,
+                DailyConsume = dailyConsume,
+                MealTime = scopedMealTime
+            };
+            newMealTime = scopedMealTime;
+            newDailyMealTime = dailyMealTime;
+        }
+
+        var details = normalizedProducts.Select(item => new MealTimeProduct
+        {
+            MealTime = dailyMealTime.MealTime,
+            ProductCode = item.ProductCode,
+            Quantity = item.Quantity,
+            Calories = CalculateCalories(productByCode[item.ProductCode].Calories, item.Quantity)
+        }).ToList();
+
+        await _dailyConsumeRepository.AddProductsAsync(
+            newDailyConsume,
+            newMealTime,
+            newDailyMealTime,
+            details,
+            cancellationToken);
+
+        return await CreateMutationResponseAsync(
+            successMessage,
+            clientId,
+            today,
+            dailyMealTime.MealTimeId,
+            dailyMealTime.MealTime.MealType,
+            cancellationToken);
     }
 
     private async Task<MealTimeProduct> GetEditableDetailAsync(
