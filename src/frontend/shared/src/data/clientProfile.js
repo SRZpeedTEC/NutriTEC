@@ -1,6 +1,7 @@
 // Mock del perfil del cliente autenticado (la sesión real vendrá del login).
 
 export default {
+  clientId: "p1",
   name: "María Fernanda Rojas",
   initials: "MR",
   email: "maria.rojas@example.com",

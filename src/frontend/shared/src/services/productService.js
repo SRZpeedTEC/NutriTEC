@@ -66,6 +66,19 @@ export async function updateProduct(barCode, product, userId) {
   return normalizeProduct(data.product ?? data);
 }
 
+// PUT /api/product/{barCode} — moderación del admin: aprueba o rechaza un producto.
+// Sin fallback (escritura): hoy falla sin backend y funcionará solo al exponer el endpoint.
+// El cuerpo/ruta exactos de moderación se confirman cuando el endpoint esté disponible.
+export async function setProductStatus(barCode, status, userId, reason) {
+  const data = await apiFetch(`/product/${barCode}`, jsonBody('PUT', {
+    barCode,
+    productStatus: status,
+    rejectionReason: reason,
+    userId,
+  }));
+  return normalizeProduct(data.product ?? data);
+}
+
 // DELETE /api/product/{barCode}?userId={userId}
 export async function deleteProduct(barCode, userId) {
   return apiFetch(`/product/${barCode}?userId=${userId}`, { method: 'DELETE' });

@@ -1,6 +1,7 @@
 // Mock del perfil del nutricionista autenticado (la sesión real vendrá del login).
 
 export default {
+  id: "n1",
   name: "Lic. Carlos Méndez Quirós",
   shortName: "Carlos Méndez",
   initials: "CM",
