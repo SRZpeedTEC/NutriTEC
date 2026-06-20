@@ -1,0 +1,5 @@
+/* Entry-point de estilos de la app. Por ahora solo lo base; en la fase de styles
+   se importarán los estilos compartidos y los propios de cada feature. */
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+}
