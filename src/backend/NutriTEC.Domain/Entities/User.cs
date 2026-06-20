@@ -32,4 +32,6 @@ public class User
     public string Email { get; set; } = string.Empty;
 
     public Client? Client { get; set; }
+
+    public Nutritionist? Nutritionist { get; set; }
 }

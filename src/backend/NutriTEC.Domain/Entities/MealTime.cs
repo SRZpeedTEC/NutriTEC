@@ -10,4 +10,6 @@ public class MealTime
     public ICollection<MealTimeProduct> Products { get; set; } = new List<MealTimeProduct>();
 
     public ICollection<DailyMealTime> DailyMealTimes { get; set; } = new List<DailyMealTime>();
+
+    public ICollection<PlanMealTime> PlanMealTimes { get; set; } = new List<PlanMealTime>();
 }

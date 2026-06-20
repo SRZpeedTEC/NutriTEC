@@ -11,15 +11,18 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IValidator<RegisterClientRequest> _registerClientValidator;
+    private readonly IValidator<RegisterNutritionistRequest> _registerNutritionistValidator;
     private readonly IValidator<LoginRequest> _loginValidator;
 
     public AuthController(
         IAuthService authService,
         IValidator<RegisterClientRequest> registerClientValidator,
+        IValidator<RegisterNutritionistRequest> registerNutritionistValidator,
         IValidator<LoginRequest> loginValidator)
     {
         _authService = authService;
         _registerClientValidator = registerClientValidator;
+        _registerNutritionistValidator = registerNutritionistValidator;
         _loginValidator = loginValidator;
     }
 
@@ -28,11 +31,21 @@ public class AuthController : ControllerBase
         RegisterClientRequest request,
         CancellationToken cancellationToken)
     {
-        // The controller performs request validation and delegates registration decisions to the service.
         await _registerClientValidator.ValidateRequestAsync(request, cancellationToken);
 
         var response = await _authService.RegisterClientAsync(request, cancellationToken);
         return Created("/api/auth/register/client", response);
+    }
+
+    [HttpPost("register/nutritionist")]
+    public async Task<IActionResult> RegisterNutritionist(
+        RegisterNutritionistRequest request,
+        CancellationToken cancellationToken)
+    {
+        await _registerNutritionistValidator.ValidateRequestAsync(request, cancellationToken);
+
+        var response = await _authService.RegisterNutritionistAsync(request, cancellationToken);
+        return Created("/api/auth/register/nutritionist", response);
     }
 
     [HttpPost("login")]
