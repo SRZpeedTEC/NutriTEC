@@ -16,5 +16,11 @@ public class NutritionPlanConfiguration : IEntityTypeConfiguration<NutritionPlan
         entity.Property(plan => plan.PlanName).HasColumnName("plan_name").HasMaxLength(120).IsUnicode(false);
         entity.Property(plan => plan.TotalCalories).HasColumnName("total_calories").HasColumnType("numeric(10, 2)");
         entity.Property(plan => plan.NutritionistCode).HasColumnName("nutritionist_code");
+
+        entity.HasOne(plan => plan.Nutritionist)
+            .WithMany(n => n.NutritionPlans)
+            .HasForeignKey(plan => plan.NutritionistCode)
+            .HasConstraintName("FK_NUTRITION_PLAN_NUTRITIONIST")
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

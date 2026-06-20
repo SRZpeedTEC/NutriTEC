@@ -16,4 +16,6 @@ public class Client
     public ICollection<Measure> Measures { get; set; } = new List<Measure>();
 
     public ICollection<PlanAssignment> PlanAssignments { get; set; } = new List<PlanAssignment>();
+
+    public ICollection<NutritionistClient> NutritionistAssociations { get; set; } = new List<NutritionistClient>();
 }

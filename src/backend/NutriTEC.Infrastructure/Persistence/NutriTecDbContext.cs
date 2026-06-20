@@ -14,6 +14,12 @@ public class NutriTecDbContext : DbContext
 
     public DbSet<Client> Clients => Set<Client>();
 
+    public DbSet<Nutritionist> Nutritionists => Set<Nutritionist>();
+
+    public DbSet<NutritionistClient> NutritionistClients => Set<NutritionistClient>();
+
+    public DbSet<PlanMealTime> PlanMealTimes => Set<PlanMealTime>();
+
     public DbSet<Measure> Measures => Set<Measure>();
 
     public DbSet<NutritionPlan> NutritionPlans => Set<NutritionPlan>();
