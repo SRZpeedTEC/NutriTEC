@@ -1,4 +1,4 @@
-// Mock de productos enviados por la comunidad, pendientes de revisión del admin (fallback del servicio de productos).
+// Mock de productos enviados por usuarios con su estado de revisión (fallback del servicio de productos: cola del admin y "mis productos" por usuario).
 
 export default [
   { id: "pr1", barcode: "7441008000013", name: "Granola artesanal NutriTEC", portion: 45, unit: "g", energy: 190, fat: 7, sodium: 12, carbs: 28, protein: 5, vitamins: "E, B1", calcium: 35, iron: 1.5, authorType: "Nutricionista", author: "Lic. Carlos Méndez", date: "2026-06-03", status: "Pendiente" },
@@ -10,4 +10,5 @@ export default [
   { id: "pr7", barcode: "7441001000017", name: "Avena en hojuelas", portion: 40, unit: "g", energy: 150, fat: 3, sodium: 2, carbs: 27, protein: 5, vitamins: "B1, B5", calcium: 20, iron: 1.8, authorType: "Nutricionista", author: "Lic. Carlos Méndez", date: "2026-05-20", status: "Aprobado" },
   { id: "pr8", barcode: "7441001000086", name: "Yogurt natural descremado", portion: 170, unit: "ml", energy: 100, fat: 0.4, sodium: 65, carbs: 12, protein: 10, vitamins: "B2, B12", calcium: 230, iron: 0.1, authorType: "Cliente", author: "Andrés Vargas León", date: "2026-05-22", status: "Aprobado" },
   { id: "pr9", barcode: "7441009000099", name: "Refresco azucarado de cola", portion: 350, unit: "ml", energy: 150, fat: 0, sodium: 30, carbs: 39, protein: 0, vitamins: "—", calcium: 0, iron: 0, authorType: "Cliente", author: "Jorge Pérez Mata", date: "2026-05-23", status: "Rechazado", reason: "Datos nutricionales no verificables" },
+  { id: "pr10", barcode: "7441008000020", name: "Crema de maní natural", portion: 32, unit: "g", energy: 188, fat: 16, sodium: 5, carbs: 7, protein: 8, vitamins: "E, B3", calcium: 20, iron: 0.6, authorType: "Nutricionista", author: "Lic. Carlos Méndez", date: "2026-05-25", status: "Aprobado" },
 ];
