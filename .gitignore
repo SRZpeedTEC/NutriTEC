@@ -36,3 +36,6 @@ appsettings.Local.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Documentos de trabajo locales (guidelines, bitácoras): no se trackean
+.local/

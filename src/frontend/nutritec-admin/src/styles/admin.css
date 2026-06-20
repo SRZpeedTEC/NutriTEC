@@ -1,0 +1,16 @@
+/* Estilos propios de las vistas del administrador: aprobación de productos y reporte de cobro. */
+
+/* ---- Producto pendiente de aprobación ---- */
+.nt-prod { border: 1px solid var(--nt-line); border-radius: 14px; overflow: hidden; background: #fff; }
+.nt-prod-head { display: flex; align-items: center; gap: .9rem; padding: 1rem 1.15rem; }
+.nt-prod-ico { width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; flex: 0 0 44px; background: var(--nt-teal-50); color: var(--nt-teal-700); border: 1px solid var(--nt-line); }
+
+/* Grilla de valores nutricionales del producto */
+.nt-nutri-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: .5rem; padding: 0 1.15rem 1.1rem; }
+.nt-nutri-cell { background: var(--nt-teal-50); border: 1px solid var(--nt-line); border-radius: 10px; padding: .5rem .7rem; }
+.nt-nutri-cell .k { font-size: .7rem; color: var(--nt-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.nt-nutri-cell .v { font-weight: 800; font-size: .95rem; }
+
+/* ---- Agrupación de filas en el reporte de cobro ---- */
+.nt-table-group th { background: var(--nt-teal-50); color: var(--nt-teal-900) !important; text-transform: none; letter-spacing: 0; font-size: .9rem; border-bottom: 1px solid var(--nt-line); }
+.nt-table-sub td { background: var(--nt-teal-50); font-weight: 800; }

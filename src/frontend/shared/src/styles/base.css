@@ -1,0 +1,61 @@
+/* Variables de marca (colores y tipografía) y estilos base del documento. */
+
+:root {
+  /* Paleta turquesa de la marca */
+  --nt-teal-900: #0B4F49;
+  --nt-teal-800: #0E5E57;
+  --nt-teal-700: #0F766E;
+  --nt-teal-600: #0D9488;
+  --nt-teal-500: #14B8A6;
+  --nt-teal-400: #2DD4BF;
+  --nt-teal-300: #5EEAD4;
+  --nt-teal-100: #CCFBF1;
+  --nt-teal-50:  #F0FDFA;
+
+  /* Neutros: texto, bordes y fondos */
+  --nt-ink:   #13211F;
+  --nt-muted: #6B7B79;
+  --nt-line:  #E6EAEA;
+  --nt-bg:    #F4F6F6;
+  --nt-card:  #FFFFFF;
+
+  /* Estados de error / rechazo */
+  --nt-danger:      #BB4A3F;
+  --nt-danger-bg:   #F8EAE8;
+  --nt-danger-line: #ECD2CE;
+
+  /* Overrides de Bootstrap: le reasignan a sus componentes los colores de la marca */
+  --bs-primary: #0D9488;
+  --bs-primary-rgb: 13, 148, 136;
+  --bs-body-color: #13211F;
+  --bs-body-font-family: 'Manrope', system-ui, sans-serif;
+  --bs-border-color: #E6EAEA;
+  --bs-link-color: #0F766E;
+  --bs-link-hover-color: #0B4F49;
+}
+
+/* Suavizado de fuentes y alto completo del documento */
+* { -webkit-font-smoothing: antialiased; }
+html, body { height: 100%; }
+
+/* Tipografía y fondo base de la app */
+body {
+  margin: 0;
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: var(--nt-ink);
+  background: var(--nt-bg);
+}
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5 {
+  font-family: 'Manrope', system-ui, sans-serif;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+
+/* Utilidades tipográficas de uso general */
+.text-muted-soft { color: var(--nt-muted) !important; }
+.fw-800 { font-weight: 800; }
+.fw-700 { font-weight: 700; }
+.fw-600 { font-weight: 600; }
+.min-w-0 { min-width: 0; }
+.mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
