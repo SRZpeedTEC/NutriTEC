@@ -1,0 +1,16 @@
+/* Estilos propios de las vistas del nutricionista: registro (foto y cobro) y selección de paciente. */
+
+/* ---- Subida de foto en el registro ---- */
+.nt-photo-slot { width: 72px; height: 72px; flex: 0 0 72px; border-radius: 50%; background: var(--nt-teal-50); border: 2px dashed var(--nt-teal-300); color: var(--nt-teal-500); display: grid; place-items: center; }
+
+/* ---- Opciones de cobro como tarjetas seleccionables (radio) ---- */
+.nt-cobro-opt { display: flex; align-items: center; gap: .85rem; width: 100%; text-align: left; cursor: pointer; background: #fff; border: 1.5px solid var(--nt-line); border-radius: 12px; padding: .85rem 1rem; }
+.nt-cobro-opt:hover { border-color: var(--nt-teal-300); background: var(--nt-teal-50); }
+.nt-cobro-opt.active { border-color: var(--nt-teal-500); background: var(--nt-teal-50); box-shadow: 0 0 0 3px rgba(20, 184, 166, .12); }
+.nt-radio { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; border: 2px solid var(--nt-line); display: grid; place-items: center; color: #fff; background: #fff; }
+.nt-radio.on { background: var(--nt-teal-500); border-color: var(--nt-teal-500); }
+
+/* ---- Selector de paciente en seguimiento ---- */
+.nt-patient-item { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .5rem; border-radius: 10px; border: 1px solid transparent; background: none; cursor: pointer; color: var(--nt-ink); }
+.nt-patient-item:hover { background: var(--nt-teal-50); }
+.nt-patient-item.active { background: var(--nt-teal-50); box-shadow: inset 3px 0 0 var(--nt-teal-500); }

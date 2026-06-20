@@ -1,5 +1,5 @@
-/* Entry-point de estilos de la app. Por ahora solo lo base; en la fase de styles
-   se importarán los estilos compartidos y los propios de cada feature. */
-body {
-  font-family: 'Manrope', system-ui, sans-serif;
-}
+/* Entry-point de estilos del nutricionista: estilos compartidos (marca, marco y componentes) + los propios del rol. */
+@import '@nutritec/shared/styles/base.css';
+@import '@nutritec/shared/styles/layout.css';
+@import '@nutritec/shared/styles/components.css';
+@import './nutritionist.css';
