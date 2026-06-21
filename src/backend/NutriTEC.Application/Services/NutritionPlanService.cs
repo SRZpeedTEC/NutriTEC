@@ -222,6 +222,40 @@ public class NutritionPlanService : INutritionPlanService
         };
     }
 
+    public async Task<ClientActivePlanDetailResponse?> GetActiveByClientAsync(
+        int clientId,
+        CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var (assignment, plan) = await _planRepository.GetActiveByClientAsync(clientId, today, cancellationToken);
+
+        if (assignment is null || plan is null) return null;
+
+        return new ClientActivePlanDetailResponse
+        {
+            AssignmentId = assignment.AssignmentId,
+            PlanId = plan.PlanId,
+            PlanName = plan.PlanName,
+            TotalCalories = plan.TotalCalories,
+            NutritionistCode = plan.NutritionistCode,
+            StartDate = assignment.StartDate,
+            EndDate = assignment.EndDate,
+            MealTimes = plan.PlanMealTimes.Select(pmt => new NutritionPlanMealTimeResponse
+            {
+                MealTimeId = pmt.MealTimeId,
+                MealType = pmt.MealTime.MealType,
+                TotalCalories = pmt.MealTime.Products.Sum(p => p.Calories * p.Quantity),
+                Products = pmt.MealTime.Products.Select(p => new NutritionPlanMealTimeProductResponse
+                {
+                    ProductCode = p.ProductCode,
+                    ProductName = p.Product?.ProductName ?? string.Empty,
+                    Quantity = p.Quantity,
+                    Calories = p.Calories
+                }).ToList()
+            }).ToList()
+        };
+    }
+
     private async Task<NutritionPlan> GetExistingPlanAsync(int planId, CancellationToken cancellationToken)
     {
         var plan = await _planRepository.GetByIdAsync(planId, cancellationToken);
@@ -294,6 +328,7 @@ public class NutritionPlanService : INutritionPlanService
                 Products = pmt.MealTime.Products.Select(p => new NutritionPlanMealTimeProductResponse
                 {
                     ProductCode = p.ProductCode,
+                    ProductName = p.Product?.ProductName ?? string.Empty,
                     Quantity = p.Quantity,
                     Calories = p.Calories
                 }).ToList()

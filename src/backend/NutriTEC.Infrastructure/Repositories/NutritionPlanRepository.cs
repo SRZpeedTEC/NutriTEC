@@ -26,8 +26,36 @@ public class NutritionPlanRepository : INutritionPlanRepository
             .Include(p => p.PlanMealTimes)
                 .ThenInclude(pmt => pmt.MealTime)
                     .ThenInclude(mt => mt.Products)
+                        .ThenInclude(mtp => mtp.Product)
             .Include(p => p.PlanAssignments)
             .FirstOrDefaultAsync(p => p.PlanId == planId, cancellationToken);
+    }
+
+    public async Task<(PlanAssignment? Assignment, NutritionPlan? Plan)> GetActiveByClientAsync(
+        int clientId,
+        DateOnly today,
+        CancellationToken cancellationToken)
+    {
+        var assignment = await _dbContext.PlanAssignments
+            .AsNoTracking()
+            .Where(a => a.ClientId == clientId)
+            .Where(a => a.AssignmentStatus == "ACTIVE")
+            .Where(a => a.StartDate <= today)
+            .Where(a => a.EndDate == null || a.EndDate >= today)
+            .OrderByDescending(a => a.StartDate)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null) return (null, null);
+
+        var plan = await _dbContext.NutritionPlans
+            .AsNoTracking()
+            .Include(p => p.PlanMealTimes)
+                .ThenInclude(pmt => pmt.MealTime)
+                    .ThenInclude(mt => mt.Products)
+                        .ThenInclude(mtp => mtp.Product)
+            .FirstOrDefaultAsync(p => p.PlanId == assignment.PlanId, cancellationToken);
+
+        return (assignment, plan);
     }
 
     public Task<IReadOnlyCollection<NutritionPlan>> GetByNutritionistCodeAsync(

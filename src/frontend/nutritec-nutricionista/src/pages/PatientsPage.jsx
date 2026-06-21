@@ -57,7 +57,7 @@ function AssignModal({ patient, plans, catalog, onClose, onAssign }) {
   );
 }
 
-function PatientCard({ p, plan, onOpen, onAssign }) {
+function PatientCard({ p, onOpen, onAssign }) {
   return (
     <div className="nt-card nt-card-pad h-100 d-flex flex-column">
       <div className="d-flex align-items-center gap-3 mb-3">
@@ -71,23 +71,17 @@ function PatientCard({ p, plan, onOpen, onAssign }) {
         <span className="nt-chip">{p.age} años</span>
         <span className="nt-chip">{p.country}</span>
       </div>
-      <div className="p-2 rounded-3 mb-3" style={{ background: plan ? 'var(--nt-teal-50)' : '#F2F4F4', border: '1px solid var(--nt-line)' }}>
-        {plan ? (
-          <div className="d-flex align-items-center gap-2">
-            <Icon name="plate" size={16} />
-            <div className="min-w-0">
-              <div className="fw-700 text-truncate" style={{ fontSize: '.88rem' }}>{plan.name}</div>
-            </div>
-          </div>
-        ) : (
-          <div className="d-flex align-items-center gap-2 text-muted-soft">
-            <Icon name="plate" size={16} /><span style={{ fontSize: '.85rem' }}>Sin plan asignado</span>
-          </div>
-        )}
+      <div className="p-2 rounded-3 mb-3" style={{ background: p.hasActivePlan ? 'var(--nt-teal-50)' : '#F2F4F4', border: '1px solid var(--nt-line)' }}>
+        <div className="d-flex align-items-center gap-2">
+          <Icon name="plate" size={16} />
+          <span className="fw-700" style={{ fontSize: '.88rem' }}>
+            {p.hasActivePlan ? 'Tiene plan activo' : 'Sin plan asignado'}
+          </span>
+        </div>
       </div>
       <div className="d-flex gap-2 mt-auto">
         <button className="btn btn-outline-primary btn-sm flex-fill" onClick={() => onOpen(p.id)}><Icon name="chat" size={15} /> Seguimiento</button>
-        <button className="btn btn-primary btn-sm flex-fill" onClick={() => onAssign(p)}><Icon name="plate" size={15} /> {plan ? 'Reasignar' : 'Asignar plan'}</button>
+        <button className="btn btn-primary btn-sm flex-fill" onClick={() => onAssign(p)}><Icon name="plate" size={15} /> {p.hasActivePlan ? 'Reasignar' : 'Asignar plan'}</button>
       </div>
     </div>
   );
@@ -209,7 +203,7 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
         <div className="row g-3">
           {patients.map((p) => (
             <div className="col-md-6 col-xl-4" key={p.id}>
-              <PatientCard p={p} plan={p.planId ? byId(plans, p.planId) : null} onOpen={onOpenPatient} onAssign={setAssignFor} />
+              <PatientCard p={p} onOpen={onOpenPatient} onAssign={setAssignFor} />
             </div>
           ))}
         </div>

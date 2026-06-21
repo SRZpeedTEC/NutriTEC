@@ -19,4 +19,6 @@ public interface INutritionPlanRepository
     Task<PlanAssignment?> GetAssignmentByIdAsync(int assignmentId, CancellationToken cancellationToken);
 
     Task DeleteAssignmentAsync(PlanAssignment assignment, CancellationToken cancellationToken);
+
+    Task<(PlanAssignment? Assignment, NutritionPlan? Plan)> GetActiveByClientAsync(int clientId, DateOnly today, CancellationToken cancellationToken);
 }

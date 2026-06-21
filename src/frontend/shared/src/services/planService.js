@@ -64,10 +64,31 @@ export async function getPlanDetail(planId) {
   return normalizePlanDetail(data);
 }
 
-// GET /api/nutrition-plans/{planId} — plan activo del cliente (por id de plan).
-export async function getActivePlan(planId) {
-  if (!planId) return null;
-  return getPlanDetail(planId);
+// GET /api/nutrition-plans/client/{clientId}/active — plan activo asignado al cliente.
+export async function getActivePlan(clientId) {
+  if (!clientId) return null;
+  const data = await apiFetch(`/nutrition-plans/client/${clientId}/active`);
+  if (!data) return null;
+  return {
+    id: data.planId,
+    name: data.planName,
+    nutritionistCode: data.nutritionistCode,
+    nutritionist: '',
+    totalGoal: Number(data.totalCalories),
+    period: data.endDate
+      ? `${data.startDate} – ${data.endDate}`
+      : `Desde ${data.startDate}`,
+    meals: (data.mealTimes ?? []).map((mt) => ({
+      mealTime: BACKEND_TO_DISPLAY[mt.mealType] ?? mt.mealType,
+      maxKcal: Number(mt.totalCalories),
+      items: (mt.products ?? []).map((pr) => ({
+        barcode: pr.productCode,
+        name: pr.productName,
+        portions: Number(pr.quantity),
+        kcal: Math.round(Number(pr.calories) * Number(pr.quantity)),
+      })),
+    })),
+  };
 }
 
 // POST /api/nutrition-plans

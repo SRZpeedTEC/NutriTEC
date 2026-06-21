@@ -100,6 +100,21 @@ public class NutritionPlanController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("client/{clientId:int}/active")]
+    public async Task<IActionResult> GetActiveByClient(
+        int clientId,
+        CancellationToken cancellationToken)
+    {
+        ControllerValidationExtensions.ValidatePositiveRouteValue(
+            nameof(clientId),
+            clientId,
+            "El identificador del cliente debe ser mayor que 0.");
+
+        var response = await _planService.GetActiveByClientAsync(clientId, cancellationToken);
+        if (response is null) return NoContent();
+        return Ok(response);
+    }
+
     [HttpPost("{planId:int}/assign")]
     public async Task<IActionResult> AssignToClient(
         int planId,
