@@ -7,7 +7,7 @@ import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getPatients, searchClients, associateClient, assignPlan } from '@nutritec/shared/services/patientService.js';
 import { getPlans } from '@nutritec/shared/services/planService.js';
-import { searchProducts } from '@nutritec/shared/services/dailyConsumeService.js';
+import { getAdminProducts } from '@nutritec/shared/services/productService.js';
 import { byId, planKcal } from '@nutritec/shared/utils/nutrition.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
@@ -109,7 +109,7 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
   // Carga pacientes y planes al montar.
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getPatients(nutritionistId), getPlans(nutritionistId), searchProducts('')])
+    Promise.all([getPatients(nutritionistId), getPlans(nutritionistId), getAdminProducts('ACTIVE')])
       .then(([pts, pls, cat]) => { setPatients(pts); setPlans(pls); setCatalog(cat); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

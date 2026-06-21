@@ -3,7 +3,7 @@ import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getPlans, getPlanDetail, createPlan, updatePlan } from '@nutritec/shared/services/planService.js';
-import { searchProducts } from '@nutritec/shared/services/dailyConsumeService.js';
+import { getAdminProducts } from '@nutritec/shared/services/productService.js';
 import { MEAL_TIMES, byBarcode, mealKcal, planKcal } from '@nutritec/shared/utils/nutrition.js';
 
 const MEAL_ICONS = { 'Desayuno': 'flame', 'Merienda Mañana': 'clock', 'Almuerzo': 'plate', 'Merienda Tarde': 'clock', 'Cena': 'chef' };
@@ -168,7 +168,7 @@ export default function PlansPage({ nutritionistId }) {
 
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getPlans(nutritionistId), searchProducts('')])
+    Promise.all([getPlans(nutritionistId), getAdminProducts('ACTIVE')])
       .then(([pls, cat]) => { setPlans(pls); setCatalog(cat); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
