@@ -32,7 +32,7 @@ INSERT INTO app_user (
     email
 )
 VALUES
-    (1, '1985-03-14', 'Andrea', 'Mora', 'hash_admin_001', 'andrea.mora@nutritec.test'),
+    (1, '1985-03-14', 'Andrea', 'Mora', '$2a$11$bgFVqqLArz2sD6eNs33e2O/aiEezYuWfwdlyGK.mJ1nZ9tPCQgGWK', 'andrea.mora@nutritec.test'),
     (2, '1989-07-22', 'Carlos', 'Vargas', 'hash_nutri_001', 'carlos.vargas@nutritec.test'),
     (3, '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 'mariana.solis@nutritec.test'),
     (4, '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 'daniel.rojas@nutritec.test'),

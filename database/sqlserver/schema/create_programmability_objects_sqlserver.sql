@@ -9,7 +9,8 @@
       - The script is standalone T-SQL and does not require SQLCMD mode.
       - Individual source files remain organized under views, triggers, and
         stored-procedures for focused maintenance.
-      - No stored procedures are currently required by the project.
+      - Admin product-management stored procedures are consumed by the SQL
+        Server API administrator endpoints.
 */
 
 USE nutrition_db;
@@ -83,11 +84,176 @@ INNER JOIN dbo.product AS p
     ON p.bar_code = rp.product_code;
 GO
 
+/*
+    Exposes product nutrition, creator identity, and review metadata for the
+    administrator product-management screen.
+*/
+CREATE OR ALTER VIEW dbo.vw_admin_products
+AS
+SELECT
+    p.bar_code,
+    p.product_name,
+    p.portion_unit,
+    p.portion_size,
+    p.calories,
+    p.fat,
+    p.sodium,
+    p.carbohydrates,
+    p.protein,
+    p.vitamins,
+    p.calcium,
+    p.iron,
+    p.product_status,
+    p.user_id AS created_by_user_id,
+    CONCAT(creator.name, ' ', creator.last_name) AS created_by_name,
+    creator.email AS created_by_email
+FROM dbo.product AS p
+INNER JOIN dbo.app_user AS creator
+    ON creator.user_id = p.user_id;
+GO
+
 -- ============================================================================
 -- Stored Procedures
 -- ============================================================================
 
--- No stored procedures are currently required by the NutriTEC backend.
+/*
+    Returns the persisted admin identity and password hash; password comparison
+    remains in C# using the backend hashing abstraction.
+*/
+CREATE OR ALTER PROCEDURE dbo.sp_admin_login
+    @email VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        a.admin_id,
+        u.user_id,
+        u.email,
+        u.name,
+        u.last_name,
+        u.birthday,
+        u.hash_password
+    FROM dbo.admin AS a
+    INNER JOIN dbo.app_user AS u
+        ON u.user_id = a.user_id
+    WHERE u.email = LOWER(LTRIM(RTRIM(@email)));
+END;
+GO
+
+/*
+    Accepts an optional product_status filter and validates the same status set
+    enforced by the product table.
+*/
+CREATE OR ALTER PROCEDURE dbo.sp_get_admin_products
+    @product_status VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @normalized_status VARCHAR(20) = NULL;
+
+    IF @product_status IS NOT NULL
+    BEGIN
+        SET @normalized_status = UPPER(LTRIM(RTRIM(@product_status)));
+
+        IF @normalized_status NOT IN ('ACTIVE', 'PENDING_REVIEW', 'REJECTED')
+        BEGIN
+            THROW 51010, 'Invalid product status for admin product listing.', 1;
+        END;
+    END;
+
+    SELECT
+        bar_code,
+        product_name,
+        portion_unit,
+        portion_size,
+        calories,
+        fat,
+        sodium,
+        carbohydrates,
+        protein,
+        vitamins,
+        calcium,
+        iron,
+        product_status,
+        created_by_user_id,
+        created_by_name,
+        created_by_email
+    FROM dbo.vw_admin_products
+    WHERE @normalized_status IS NULL
+        OR product_status = @normalized_status
+    ORDER BY product_name, bar_code;
+END;
+GO
+
+/*
+    Reads from vw_admin_products so list and detail responses stay aligned.
+*/
+CREATE OR ALTER PROCEDURE dbo.sp_get_admin_product_by_barcode
+    @bar_code VARCHAR(40)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        bar_code,
+        product_name,
+        portion_unit,
+        portion_size,
+        calories,
+        fat,
+        sodium,
+        carbohydrates,
+        protein,
+        vitamins,
+        calcium,
+        iron,
+        product_status,
+        created_by_user_id,
+        created_by_name,
+        created_by_email
+    FROM dbo.vw_admin_products
+    WHERE bar_code = LTRIM(RTRIM(@bar_code));
+END;
+GO
+
+/*
+    Approves or rejects an existing product and records who performed the
+    review. The product_status audit trigger stores the history row.
+*/
+CREATE OR ALTER PROCEDURE dbo.sp_update_product_status_by_admin
+    @bar_code VARCHAR(40),
+    @admin_id INT,
+    @new_status VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @normalized_bar_code VARCHAR(40) = LTRIM(RTRIM(@bar_code));
+    DECLARE @normalized_status VARCHAR(20) = UPPER(LTRIM(RTRIM(@new_status)));
+    IF @normalized_status NOT IN ('ACTIVE', 'REJECTED')
+    BEGIN
+        THROW 51011, 'Admin review status must be ACTIVE or REJECTED.', 1;
+    END;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.product WHERE bar_code = @normalized_bar_code)
+    BEGIN
+        THROW 51012, 'Product not found.', 1;
+    END;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.admin WHERE admin_id = @admin_id)
+    BEGIN
+        THROW 51013, 'Admin not found.', 1;
+    END;
+
+    UPDATE dbo.product
+    SET product_status = @normalized_status
+    WHERE bar_code = @normalized_bar_code;
+
+    EXEC dbo.sp_get_admin_product_by_barcode @bar_code = @normalized_bar_code;
+END;
+GO
 
 -- ============================================================================
 -- Triggers

@@ -201,7 +201,7 @@ CREATE TABLE product (
     CONSTRAINT ck_product_bar_code_not_blank CHECK (LTRIM(RTRIM(bar_code)) <> ''),
     CONSTRAINT ck_product_portion_unit_not_blank CHECK (LTRIM(RTRIM(portion_unit)) <> ''),
     CONSTRAINT ck_product_status CHECK (
-        product_status IN ('ACTIVE', 'INACTIVE', 'PENDING_REVIEW', 'REJECTED')
+        product_status IN ('ACTIVE', 'PENDING_REVIEW', 'REJECTED')
     ),
     CONSTRAINT ck_product_iron_non_negative CHECK (iron >= 0),
     CONSTRAINT ck_product_calcium_non_negative CHECK (calcium >= 0),
