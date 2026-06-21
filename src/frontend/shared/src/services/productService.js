@@ -1,9 +1,11 @@
-// Manejar el envío, la consulta y la moderación de productos.
-
 import { apiFetch, jsonBody } from './api.js';
-import PENDING_PRODUCTS from '../data/pendingProducts.js';
 
-// Traduce un producto del backend al formato corto que usa la app.
+const STATUS_BACKEND_TO_DISPLAY = {
+  PENDING_REVIEW: 'Pendiente',
+  ACTIVE: 'Aprobado',
+  REJECTED: 'Rechazado',
+};
+
 function normalizeProduct(p) {
   return {
     barcode: p.barCode,
@@ -18,12 +20,11 @@ function normalizeProduct(p) {
     vitamins: p.vitamins,
     calcium: p.calcium,
     iron: p.iron,
-    status: p.productStatus,
+    status: STATUS_BACKEND_TO_DISPLAY[p.productStatus] ?? p.productStatus,
     userId: p.userId,
   };
 }
 
-// Convierte un producto de la app al cuerpo que espera el backend.
 function toProductRequest(product, userId) {
   return {
     barCode: product.barcode,
@@ -48,16 +49,19 @@ export async function createProduct(product, userId) {
   return normalizeProduct(data.product ?? data);
 }
 
-// GET /api/product/pending/{userId}
+// GET /api/product/pending/{userId} — productos enviados por el usuario.
 export async function getPendingProducts(userId) {
-  try {
-    const data = await apiFetch(`/product/pending/${userId}`);
-    const list = Array.isArray(data) ? data : data.products ?? [];
-    return list.map(normalizeProduct);
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/product/pending/{userId}
-    return PENDING_PRODUCTS;
-  }
+  const data = await apiFetch(`/product/pending/${userId}`);
+  const list = Array.isArray(data) ? data : data.products ?? [];
+  return list.map(normalizeProduct);
+}
+
+// GET /api/admin/products?status={status} — todos los productos para el administrador.
+export async function getAdminProducts(status) {
+  const qs = status && status !== 'Todos' ? `?status=${encodeURIComponent(status)}` : '';
+  const data = await apiFetch(`/admin/products${qs}`);
+  const list = Array.isArray(data) ? data : data.products ?? [];
+  return list.map(normalizeProduct);
 }
 
 // PUT /api/product/{barCode}
@@ -66,17 +70,14 @@ export async function updateProduct(barCode, product, userId) {
   return normalizeProduct(data.product ?? data);
 }
 
-// PUT /api/product/{barCode} — moderación del admin: aprueba o rechaza un producto.
-// Sin fallback (escritura): hoy falla sin backend y funcionará solo al exponer el endpoint.
-// El cuerpo/ruta exactos de moderación se confirman cuando el endpoint esté disponible.
-export async function setProductStatus(barCode, status, userId, reason) {
-  const data = await apiFetch(`/product/${barCode}`, jsonBody('PUT', {
-    barCode,
-    productStatus: status,
-    rejectionReason: reason,
-    userId,
-  }));
-  return normalizeProduct(data.product ?? data);
+// PUT /api/admin/products/{barCode}/approve?adminId={adminId}
+export async function approveProduct(barCode, adminId) {
+  return apiFetch(`/admin/products/${barCode}/approve?adminId=${adminId}`, { method: 'PUT' });
+}
+
+// PUT /api/admin/products/{barCode}/reject?adminId={adminId}
+export async function rejectProduct(barCode, adminId) {
+  return apiFetch(`/admin/products/${barCode}/reject?adminId=${adminId}`, { method: 'PUT' });
 }
 
 // DELETE /api/product/{barCode}?userId={userId}

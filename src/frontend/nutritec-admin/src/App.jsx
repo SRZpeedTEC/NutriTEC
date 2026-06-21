@@ -64,7 +64,7 @@ export default function App() {
       )}
       <main className="nt-main">
         <TopBar title={title} subtitle={sub} onMenu={() => setMenuOpen(true)} />
-        {screen === 'productos' && <ProductsPage userId={session.id} onPendingCount={setPendingCount} />}
+        {screen === 'productos' && <ProductsPage userId={session.userId} onPendingCount={setPendingCount} />}
         {screen === 'cobro' && <CobroPage />}
       </main>
     </div>

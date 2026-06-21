@@ -76,10 +76,10 @@ export default function App() {
       )}
       <main className="nt-main">
         <TopBar title={title} subtitle={sub} onMenu={() => setMenuOpen(true)} />
-        {screen === 'pacientes' && <PatientsPage nutritionistId={session.id} onOpenPatient={openPatient} />}
-        {screen === 'planes' && <PlansPage nutritionistId={session.id} />}
-        {screen === 'seguimiento' && <FollowupPage nutritionistId={session.id} initialPatient={selectedPatient} />}
-        {screen === 'productos' && <ProductsPage userId={session.id} />}
+        {screen === 'pacientes' && <PatientsPage nutritionistId={session.nutritionistCode} onOpenPatient={openPatient} />}
+        {screen === 'planes' && <PlansPage nutritionistId={session.nutritionistCode} />}
+        {screen === 'seguimiento' && <FollowupPage nutritionistId={session.nutritionistCode} initialPatient={selectedPatient} />}
+        {screen === 'productos' && <ProductsPage userId={session.userId} />}
       </main>
     </div>
   );

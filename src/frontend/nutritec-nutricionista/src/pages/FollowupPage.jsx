@@ -1,5 +1,3 @@
-// Manejar el seguimiento de pacientes: registro diario, avance y retroalimentación.
-
 import { useState, useEffect, useRef } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
@@ -8,14 +6,17 @@ import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import LineChart from '@nutritec/shared/components/LineChart.jsx';
 import { getPatients } from '@nutritec/shared/services/patientService.js';
 import { getPlans } from '@nutritec/shared/services/planService.js';
-import { getPatientThread, sendPatientMessage } from '@nutritec/shared/services/feedbackService.js';
+import { getPatientThread, sendPatientMessage, markAsRead } from '@nutritec/shared/services/feedbackService.js';
 import { MEAL_TIMES, byId, sumKcal } from '@nutritec/shared/utils/nutrition.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
-// Icono representativo de cada tiempo de comida.
 const MEAL_ICONS = { 'Desayuno': 'flame', 'Merienda Mañana': 'clock', 'Almuerzo': 'plate', 'Merienda Tarde': 'clock', 'Cena': 'chef' };
 
-// Selector lateral de pacientes.
+const METRICS = [
+  { k: 'weight', l: 'Peso', u: 'kg' }, { k: 'waist', l: 'Cintura', u: 'cm' },
+  { k: 'hips', l: 'Caderas', u: 'cm' }, { k: 'muscle', l: '% Músculo', u: '%' }, { k: 'fat', l: '% Grasa', u: '%' },
+];
+
 function PatientPicker({ patients, plans, sel, onSel }) {
   return (
     <div className="nt-card nt-card-pad">
@@ -35,7 +36,6 @@ function PatientPicker({ patients, plans, sel, onSel }) {
   );
 }
 
-// Registro diario del paciente (lectura) contra su plan.
 function PatientLog({ p, plan }) {
   const log = p.dailyLog ?? [];
   const total = log.reduce((a, m) => a + sumKcal(m.items), 0);
@@ -43,16 +43,16 @@ function PatientLog({ p, plan }) {
   return (
     <div className="nt-card nt-card-pad">
       <div className="d-flex justify-content-between align-items-start mb-3">
-        <SectionTitle sub={plan ? `Plan: ${plan.name} · ${p.period}` : 'Sin plan asignado'}>Registro diario · {formatDate(p.lastLog)}</SectionTitle>
+        <SectionTitle sub={plan ? `Plan: ${plan.name}` : 'Sin plan asignado'}>Registro diario</SectionTitle>
         <Pill tone={total > goal ? 'red' : 'teal'}>{total} / {goal} kcal</Pill>
       </div>
       <div className="progress mb-3">
-        <div className={'progress-bar' + (total > goal ? ' over' : '')} style={{ width: Math.min(100, (total / goal) * 100) + '%' }} />
+        <div className={'progress-bar' + (total > goal ? ' over' : '')} style={{ width: Math.min(100, goal > 0 ? (total / goal) * 100 : 0) + '%' }} />
       </div>
       <div className="d-flex flex-column gap-2">
         {MEAL_TIMES.map((t) => {
           const items = log.find((m) => m.mealTime === t)?.items ?? [];
-          const planMeal = plan ? plan.meals.find((m) => m.mealTime === t) : null;
+          const planMeal = plan ? plan.meals?.find((m) => m.mealTime === t) : null;
           const sum = sumKcal(items);
           const max = planMeal ? planMeal.maxKcal : null;
           return (
@@ -88,15 +88,8 @@ function PatientLog({ p, plan }) {
   );
 }
 
-// Métricas graficables de las medidas.
-const METRICS = [
-  { k: 'weight', l: 'Peso', u: 'kg' }, { k: 'waist', l: 'Cintura', u: 'cm' },
-  { k: 'hips', l: 'Caderas', u: 'cm' }, { k: 'muscle', l: '% Músculo', u: '%' }, { k: 'fat', l: '% Grasa', u: '%' },
-];
-
-// Avance del paciente: medidas, gráfica y reporte imprimible.
 function PatientProgress({ p }) {
-  const measurements = [...(p.measurements || [])].sort((a, b) => a.date.localeCompare(b.date));
+  const measurements = [...(p.measurements || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   const [metric, setMetric] = useState('weight');
   const mm = METRICS.find((x) => x.k === metric);
 
@@ -110,7 +103,6 @@ function PatientProgress({ p }) {
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => window.print()}><Icon name="pdf" size={15} /> Generar PDF</button>
       </div>
-
       <div className="nt-card nt-card-pad">
         <div className="d-flex justify-content-between align-items-start mb-4">
           <div>
@@ -147,8 +139,7 @@ function PatientProgress({ p }) {
   );
 }
 
-// Hilo de retroalimentación entre el nutricionista y el paciente.
-function FeedbackThread({ p, thread, onSend }) {
+function FeedbackThread({ p, nutritionistId, thread, onSend }) {
   const [text, setText] = useState('');
   const endRef = useRef(null);
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [thread.length, p.id]);
@@ -166,7 +157,6 @@ function FeedbackThread({ p, thread, onSend }) {
         <SectionTitle sub="Foro de retroalimentación · se guarda en MongoDB">Retroalimentación</SectionTitle>
         <Pill tone="teal"><Icon name="chat" size={13} /> {thread.length}</Pill>
       </div>
-
       <div className="nt-thread" ref={endRef}>
         {thread.length === 0 && <div className="nt-empty">Aún no hay retroalimentación para {p.name.split(' ')[0]}.</div>}
         {thread.map((m, i) => {
@@ -184,7 +174,6 @@ function FeedbackThread({ p, thread, onSend }) {
           );
         })}
       </div>
-
       <form onSubmit={send} className="nt-thread-compose">
         <textarea className="form-control" rows={2} placeholder={`Escribe retroalimentación para ${p.name.split(' ')[0]}…`}
           value={text} onChange={(e) => setText(e.target.value)}
@@ -198,7 +187,6 @@ function FeedbackThread({ p, thread, onSend }) {
   );
 }
 
-// Selector de sub-vista: registro diario / avance / retroalimentación.
 function SegToggle({ view, onView }) {
   const opts = [
     { key: 'registro', label: 'Registro diario', icon: 'plate' },
@@ -216,7 +204,6 @@ function SegToggle({ view, onView }) {
   );
 }
 
-// Vista principal: carga pacientes y planes, y muestra el seguimiento del paciente activo.
 export default function FollowupPage({ nutritionistId, initialPatient }) {
   const [patients, setPatients] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -228,7 +215,6 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
   const [thread, setThread] = useState([]);
   const [toast, setToast] = useState(null);
 
-  // Carga los pacientes del nutricionista y sus planes.
   useEffect(() => {
     setLoading(true); setError(null);
     Promise.all([getPatients(nutritionistId), getPlans(nutritionistId)])
@@ -240,20 +226,18 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
       .finally(() => setLoading(false));
   }, [nutritionistId]);
 
-  // Sincroniza la selección cuando se abre un paciente desde otra vista.
   useEffect(() => { if (initialPatient) setSel(initialPatient); }, [initialPatient]);
 
-  // Carga el hilo de retroalimentación del paciente seleccionado.
+  // Carga el hilo de retroalimentación cuando cambia el paciente seleccionado.
   useEffect(() => {
     if (!sel) return;
-    getPatientThread(sel).then(setThread).catch(() => setThread([]));
-  }, [sel]);
+    getPatientThread(nutritionistId, sel).then(setThread).catch(() => setThread([]));
+  }, [sel, nutritionistId]);
 
-  // Envía un mensaje de retroalimentación y recarga el hilo.
   async function send(text) {
     try {
-      await sendPatientMessage(sel, text);
-      setThread(await getPatientThread(sel));
+      await sendPatientMessage(nutritionistId, sel, nutritionistId, text);
+      setThread(await getPatientThread(nutritionistId, sel));
     } catch (err) {
       setToast(err.message || 'No se pudo enviar el mensaje');
       setTimeout(() => setToast(null), 2600);
@@ -288,7 +272,7 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
                 </div>
               </div>
               <div className="row g-2 text-center mt-1">
-                {[['Peso', p.weight + ' kg'], ['IMC', p.bmi], ['% Grasa', p.fat + '%'], ['% Músc.', p.muscle + '%']].map((m, i) => (
+                {[['Edad', p.age + ' años'], ['País', p.country]].map((m, i) => (
                   <div className="col-6" key={i}>
                     <div className="p-2 rounded-3" style={{ background: 'var(--nt-teal-50)' }}>
                       <div className="fw-800" style={{ fontSize: '.95rem' }}>{m[1]}</div>
@@ -304,7 +288,7 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
           <SegToggle view={view} onView={setView} />
           {view === 'registro' && <PatientLog p={p} plan={plan} />}
           {view === 'avance' && <PatientProgress p={p} />}
-          {view === 'feedback' && <FeedbackThread p={p} thread={thread} onSend={send} />}
+          {view === 'feedback' && <FeedbackThread p={p} nutritionistId={nutritionistId} thread={thread} onSend={send} />}
         </div>
       </div>
       {toast && <div className="nt-toast warn"><Icon name="x" size={16} /> {toast}</div>}

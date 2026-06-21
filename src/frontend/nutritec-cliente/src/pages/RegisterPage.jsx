@@ -1,10 +1,8 @@
-// Manejar el registro de un cliente (wizard de tres pasos).
-
 import { useState } from 'react';
 import logo from '@nutritec/shared/assets/logo.png';
 import Field from '@nutritec/shared/components/Field.jsx';
 import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
-import { getClientProfile } from '@nutritec/shared/services/profileService.js';
+import { registerClient } from '@nutritec/shared/services/authService.js';
 
 const EMPTY_FORM = {
   firstName: '', lastName: '', age: '', birthDate: '1994-09-12', country: 'Costa Rica',
@@ -15,17 +13,40 @@ const EMPTY_FORM = {
 const STEPS = ['Datos personales', 'Medidas corporales', 'Meta y cuenta'];
 const COUNTRIES = ['Costa Rica', 'Panamá', 'Nicaragua', 'Guatemala', 'México', 'Colombia'];
 
-// Pantalla de registro: recoge los datos en tres pasos y entrega la sesión.
 export default function RegisterPage({ onDone, onGoLogin }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  // Crea la cuenta: en la fase mock siembra la sesión desde el perfil del cliente.
   async function finish() {
-    // MOCK_REGISTER — reemplazar por authService.registerClient(form) al conectar el backend.
-    const profile = await getClientProfile();
-    onDone(profile);
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        name: form.firstName,
+        lastName: form.lastName,
+        birthday: form.birthDate,
+        country: form.country,
+        bodyWeight: Number(form.weight) || 0,
+        bodyMassIndex: Number(form.bmi) || 0,
+        waist: Number(form.waist) || 0,
+        neck: Number(form.neck) || 0,
+        hip: Number(form.hips) || 0,
+        musclePercentage: Number(form.muscle) || 0,
+        fatPercentage: Number(form.fat) || 0,
+        maxDailyCalories: Number(form.calorieGoal) || 0,
+        email: form.email,
+        password: form.password,
+      };
+      const session = await registerClient(payload);
+      onDone(session);
+    } catch (err) {
+      setError(err.message || 'No se pudo crear la cuenta');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -41,16 +62,17 @@ export default function RegisterPage({ onDone, onGoLogin }) {
           {STEPS.map((s, i) => <div key={i} className={'nt-step ' + (i < step ? 'done' : i === step ? 'active' : '')} />)}
         </div>
 
+        {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
+
         {step === 0 && (
           <div className="row">
             <Field label="Nombre" ph="María Fernanda" half value={form.firstName} onChange={(v) => set('firstName', v)} />
             <Field label="Apellidos" ph="Rojas Vargas" half value={form.lastName} onChange={(v) => set('lastName', v)} />
-            <Field label="Edad" type="number" ph="31" half value={form.age} onChange={(v) => set('age', v)} />
             <div className="mb-3 col-md-6">
               <label className="form-label">Fecha de nacimiento</label>
               <DatePicker value={form.birthDate} onChange={(v) => set('birthDate', v)} showToday={false} placeholder="Selecciona tu fecha" />
             </div>
-            <div className="mb-3 col-12">
+            <div className="mb-3 col-md-6">
               <label className="form-label">País donde reside</label>
               <select className="form-select" value={form.country} onChange={(e) => set('country', e.target.value)}>
                 {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
@@ -83,7 +105,10 @@ export default function RegisterPage({ onDone, onGoLogin }) {
           {step > 0 && <button className="btn btn-outline-primary px-4" onClick={() => setStep(step - 1)}>Atrás</button>}
           {step < 2
             ? <button className="btn btn-primary flex-fill" onClick={() => setStep(step + 1)}>Continuar</button>
-            : <button className="btn btn-primary flex-fill" onClick={finish}>Crear mi cuenta</button>}
+            : <button className="btn btn-primary flex-fill" onClick={finish} disabled={loading}>
+                {loading ? <span className="spinner-border spinner-border-sm me-2" /> : null}
+                Crear mi cuenta
+              </button>}
         </div>
         <div className="text-center text-muted-soft mt-4" style={{ fontSize: '.92rem' }}>
           ¿Ya tienes cuenta?{' '}

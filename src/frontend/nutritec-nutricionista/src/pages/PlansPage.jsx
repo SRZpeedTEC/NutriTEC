@@ -1,20 +1,14 @@
-// Manejar los planes de alimentación: listado y editor de plan.
-
 import { useState, useEffect } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
-import { getPlans, createPlan, updatePlan } from '@nutritec/shared/services/planService.js';
+import { getPlans, getPlanDetail, createPlan, updatePlan } from '@nutritec/shared/services/planService.js';
 import { searchProducts } from '@nutritec/shared/services/dailyConsumeService.js';
 import { MEAL_TIMES, byBarcode, mealKcal, planKcal } from '@nutritec/shared/utils/nutrition.js';
 
-// Icono representativo de cada tiempo de comida.
 const MEAL_ICONS = { 'Desayuno': 'flame', 'Merienda Mañana': 'clock', 'Almuerzo': 'plate', 'Merienda Tarde': 'clock', 'Cena': 'chef' };
-
-// Meta de kcal por defecto al crear un plan nuevo.
 const DEFAULT_MAX = { 'Desayuno': 400, 'Merienda Mañana': 200, 'Almuerzo': 550, 'Merienda Tarde': 200, 'Cena': 450 };
 
-// Tarjeta resumen de un plan.
 function PlanCard({ plan, catalog, onEdit }) {
   const total = Math.round(planKcal(plan.meals, catalog));
   const items = plan.meals.reduce((a, m) => a + m.items.length, 0);
@@ -23,7 +17,6 @@ function PlanCard({ plan, catalog, onEdit }) {
       <div className="d-flex justify-content-between align-items-start mb-2">
         <div>
           <div className="fw-800" style={{ fontSize: '1.15rem' }}>{plan.name}</div>
-          <div className="text-muted-soft" style={{ fontSize: '.8rem' }}>{plan.author}</div>
         </div>
         <Pill tone="teal"><Icon name="flame" size={13} /> {total} kcal</Pill>
       </div>
@@ -37,7 +30,6 @@ function PlanCard({ plan, catalog, onEdit }) {
       <div className="nt-divider" style={{ margin: '.5rem 0 .85rem' }} />
       <div className="d-flex align-items-center justify-content-between mt-auto">
         <div className="d-flex gap-3 text-muted-soft" style={{ fontSize: '.82rem' }}>
-          <span><Icon name="users" size={14} /> {plan.patients} pacientes</span>
           <span><Icon name="plate" size={14} /> {items} alimentos</span>
         </div>
         <button className="btn btn-soft btn-sm px-3" onClick={() => onEdit(plan)}><Icon name="edit" size={14} /> Editar</button>
@@ -46,7 +38,6 @@ function PlanCard({ plan, catalog, onEdit }) {
   );
 }
 
-// Constructor de una comida: lista de alimentos con porciones editables y selector para agregar.
 function MealBuilder({ meal, catalog, onAdd, onSetPortions, onRemove }) {
   const [sel, setSel] = useState(catalog[0]?.barcode);
   const total = Math.round(mealKcal(meal.items, catalog));
@@ -90,15 +81,14 @@ function MealBuilder({ meal, catalog, onAdd, onSetPortions, onRemove }) {
           <select className="form-select" value={sel} onChange={(e) => setSel(e.target.value)}>
             {catalog.map((p) => <option key={p.barcode} value={p.barcode}>{p.name} ({p.energy} kcal)</option>)}
           </select>
-          <button className="btn btn-primary px-3" onClick={() => onAdd(meal.mealTime, sel)}><Icon name="plus" size={14} /> Agregar</button>
+          <button className="btn btn-primary px-3" onClick={() => onAdd(meal.mealTime, sel)} disabled={!sel}><Icon name="plus" size={14} /> Agregar</button>
         </div>
       </div>
     </div>
   );
 }
 
-// Editor de plan: nombre, comidas y resumen de calorías.
-function PlanEditor({ base, author, catalog, onClose, onSave }) {
+function PlanEditor({ base, nutritionistId, catalog, onClose, onSave }) {
   const [name, setName] = useState(base ? base.name : '');
   const [meals, setMeals] = useState(() =>
     base
@@ -122,7 +112,6 @@ function PlanEditor({ base, author, catalog, onClose, onSave }) {
           <div className="nt-card nt-card-pad mb-3">
             <label className="form-label">Nombre del plan</label>
             <input className="form-control form-control-lg" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Plan Pérdida Saludable" />
-            <div className="text-muted-soft mt-2" style={{ fontSize: '.82rem' }}>Creado por <strong>{author}</strong></div>
           </div>
           {meals.map((m) => (
             <MealBuilder key={m.mealTime} meal={m} catalog={catalog} onAdd={onAdd} onSetPortions={onSetPortions} onRemove={onRemove} />
@@ -169,16 +158,14 @@ function PlanEditor({ base, author, catalog, onClose, onSave }) {
   );
 }
 
-// Vista principal: carga los planes y el catálogo, y alterna entre listado y editor.
 export default function PlansPage({ nutritionistId }) {
   const [plans, setPlans] = useState([]);
   const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(null); // null | 'new' | plan
+  const [editing, setEditing] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Carga los planes del nutricionista y el catálogo de productos.
   useEffect(() => {
     setLoading(true); setError(null);
     Promise.all([getPlans(nutritionistId), searchProducts('')])
@@ -187,19 +174,26 @@ export default function PlansPage({ nutritionistId }) {
       .finally(() => setLoading(false));
   }, [nutritionistId]);
 
-  // Muestra un aviso flotante temporal.
   function flash(message) {
     setToast(message);
     setTimeout(() => setToast(null), 2600);
   }
 
-  // Crea o actualiza un plan y recarga el listado.
+  async function openEdit(plan) {
+    try {
+      const detail = await getPlanDetail(plan.id);
+      setEditing(detail);
+    } catch {
+      setEditing(plan);
+    }
+  }
+
   async function save({ name, meals }) {
     const target = editing;
     setEditing(null);
     try {
       if (target === 'new') await createPlan({ name, meals }, nutritionistId);
-      else await updatePlan(target.id, { name, meals });
+      else await updatePlan(target.id, { name, meals }, nutritionistId);
       setPlans(await getPlans(nutritionistId));
       flash('Plan guardado correctamente');
     } catch (err) {
@@ -215,7 +209,7 @@ export default function PlansPage({ nutritionistId }) {
   }
 
   if (editing) {
-    return <PlanEditor base={editing === 'new' ? null : editing} author="Lic. Carlos Méndez Quirós" catalog={catalog} onClose={() => setEditing(null)} onSave={save} />;
+    return <PlanEditor base={editing === 'new' ? null : editing} nutritionistId={nutritionistId} catalog={catalog} onClose={() => setEditing(null)} onSave={save} />;
   }
 
   return (
@@ -225,11 +219,13 @@ export default function PlansPage({ nutritionistId }) {
         <button className="btn btn-primary" onClick={() => setEditing('new')}><Icon name="plus" size={16} /> Nuevo plan</button>
       </div>
       <div className="row g-3">
-        {plans.map((p) => (
-          <div className="col-md-6" key={p.id}>
-            <PlanCard plan={p} catalog={catalog} onEdit={setEditing} />
-          </div>
-        ))}
+        {plans.length === 0
+          ? <div className="nt-empty"><Icon name="plate" size={26} /><div className="mt-2 fw-700">No tienes planes creados</div></div>
+          : plans.map((p) => (
+            <div className="col-md-6" key={p.id}>
+              <PlanCard plan={p} catalog={catalog} onEdit={openEdit} />
+            </div>
+          ))}
       </div>
       {toast && <div className="nt-toast"><Icon name="check" size={16} /> {toast}</div>}
     </div>

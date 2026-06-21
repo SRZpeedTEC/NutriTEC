@@ -1,27 +1,67 @@
-// Manejar los pacientes del nutricionista y el catálogo de clientes (lecturas mock; escrituras sin endpoint aún).
-
 import { apiFetch, jsonBody } from './api.js';
-import PATIENTS from '../data/patients.js';
-import CLIENTS from '../data/clients.js';
 
-// Devuelve los pacientes asociados al nutricionista.
-export async function getPatients(nutritionistId) {
-  // MOCK_FALLBACK — sin endpoint de pacientes; reemplazar al exponer GET de pacientes.
-  return PATIENTS;
+function toInitials(fullName) {
+  return (fullName || '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
 
-// Devuelve los clientes disponibles para buscar y asociar.
-export async function getClients(nutritionistId) {
-  // MOCK_FALLBACK — sin endpoint de clientes; reemplazar al exponer GET de clientes.
-  return CLIENTS;
+function normalizePatient(p) {
+  return {
+    id: p.clientId,
+    name: p.fullName,
+    email: p.email,
+    age: p.age,
+    country: p.country,
+    initials: toInitials(p.fullName),
+    calorieGoal: 2000,
+    planId: null,
+    period: null,
+    dailyLog: [],
+    measurements: [],
+    weight: null,
+    bmi: null,
+    fat: null,
+    muscle: null,
+  };
 }
 
-// POST /api/... — asocia un cliente como paciente del nutricionista. (ruta TBD: confirmar al exponer el endpoint)
-export async function associateClient(nutritionistId, clientId) {
-  return apiFetch('/patients', jsonBody('POST', { nutritionistId, clientId }));
+// GET /api/nutritionist/{nutritionistCode}/patients
+export async function getPatients(nutritionistCode) {
+  const data = await apiFetch(`/nutritionist/${nutritionistCode}/patients`);
+  const list = Array.isArray(data) ? data : data.patients ?? [];
+  return list.map(normalizePatient);
 }
 
-// PUT /api/... — asigna/actualiza el plan de un paciente en un periodo. (ruta TBD: confirmar al exponer el endpoint)
-export async function assignPlan(patientId, { planId, startDate, endDate }) {
-  return apiFetch(`/patients/${patientId}/plan`, jsonBody('PUT', { planId, startDate, endDate }));
+// GET /api/nutritionist/clients/search?query={query}
+export async function searchClients(query) {
+  if (!query || query.trim().length < 2) return [];
+  const data = await apiFetch(`/nutritionist/clients/search?query=${encodeURIComponent(query.trim())}`);
+  const list = Array.isArray(data) ? data : [];
+  return list.map((c) => ({
+    id: c.clientId,
+    name: c.fullName,
+    email: c.email,
+    age: c.age,
+    country: c.country,
+    initials: toInitials(c.fullName),
+  }));
+}
+
+// POST /api/nutritionist/{nutritionistCode}/patients/{clientId}
+export async function associateClient(nutritionistCode, clientId) {
+  return apiFetch(`/nutritionist/${nutritionistCode}/patients/${clientId}`, { method: 'POST' });
+}
+
+// DELETE /api/nutritionist/{nutritionistCode}/patients/{clientId}
+export async function disassociateClient(nutritionistCode, clientId) {
+  return apiFetch(`/nutritionist/${nutritionistCode}/patients/${clientId}`, { method: 'DELETE' });
+}
+
+// POST /api/nutrition-plans/{planId}/assign
+export async function assignPlan(planId, { clientId, nutritionistCode, startDate, endDate }) {
+  return apiFetch(`/nutrition-plans/${planId}/assign`, jsonBody('POST', {
+    clientId,
+    nutritionistCode,
+    startDate,
+    endDate: endDate ?? null,
+  }));
 }

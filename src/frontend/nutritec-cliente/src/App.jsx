@@ -89,7 +89,7 @@ export default function App() {
         {screen === 'reporte' && <ProgressReportPage clientId={clientId} userName={session.name} />}
         {screen === 'productos' && <ProductsPage userId={clientId} />}
         {screen === 'recetas' && <RecipesPage clientId={clientId} />}
-        {screen === 'seguimiento' && <FeedbackPage clientId={clientId} />}
+        {screen === 'seguimiento' && <FeedbackPage clientId={clientId} nutritionistCode={session.nutritionistCode ?? null} />}
       </main>
     </div>
   );

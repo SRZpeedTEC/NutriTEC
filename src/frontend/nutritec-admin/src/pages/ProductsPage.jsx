@@ -1,13 +1,10 @@
-// Manejar la aprobación de productos: cola de revisión, filtros y moderación.
-
 import { useState, useEffect } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
 import Modal from '@nutritec/shared/components/Modal.jsx';
-import { getPendingProducts, setProductStatus } from '@nutritec/shared/services/productService.js';
+import { getAdminProducts, approveProduct, rejectProduct } from '@nutritec/shared/services/productService.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
-// Celda compacta con un valor nutricional y su unidad.
 function NutriCell({ k, v, u }) {
   return (
     <div className="nt-nutri-cell">
@@ -17,14 +14,12 @@ function NutriCell({ k, v, u }) {
   );
 }
 
-// Etiqueta de estado del producto según su valor.
 function StatusPill({ status }) {
   if (status === 'Aprobado') return <Pill tone="teal"><Icon name="check" size={13} /> Aprobado</Pill>;
   if (status === 'Rechazado') return <Pill tone="red"><Icon name="x" size={13} /> Rechazado</Pill>;
   return <Pill tone="gray"><Icon name="clock" size={13} /> Pendiente</Pill>;
 }
 
-// Grilla con los ocho valores nutricionales de un producto.
 function NutriGrid({ p, pad }) {
   return (
     <div className="nt-nutri-grid" style={pad ? undefined : { padding: 0 }}>
@@ -40,7 +35,6 @@ function NutriGrid({ p, pad }) {
   );
 }
 
-// Tarjeta de un producto con su autor, valores y acciones de moderación.
 function ProductCard({ p, onApprove, onReject, onDetail }) {
   return (
     <div className="nt-prod h-100 d-flex flex-column">
@@ -89,7 +83,6 @@ function ProductCard({ p, onApprove, onReject, onDetail }) {
   );
 }
 
-// Modal que pide el motivo antes de rechazar un producto.
 function RejectModal({ product, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
   return (
@@ -105,7 +98,6 @@ function RejectModal({ product, onClose, onConfirm }) {
   );
 }
 
-// Modal con el detalle nutricional completo del producto.
 function DetailModal({ product, onClose }) {
   const p = product;
   return (
@@ -122,10 +114,16 @@ function DetailModal({ product, onClose }) {
   );
 }
 
-// Pestañas del control segmentado por estado de revisión.
+// Mapeo de tabs a valores de status del backend.
+const STATUS_FILTER_MAP = {
+  Pendiente: 'PENDING_REVIEW',
+  Aprobado: 'ACTIVE',
+  Rechazado: 'REJECTED',
+  Todos: null,
+};
+
 const TABS = [['Pendiente', 'Pendientes'], ['Aprobado', 'Aprobados'], ['Rechazado', 'Rechazados'], ['Todos', 'Todos']];
 
-// Vista principal: carga la cola, filtra y modera productos.
 export default function ProductsPage({ userId, onPendingCount }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,32 +136,34 @@ export default function ProductsPage({ userId, onPendingCount }) {
   const [detail, setDetail] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Carga la cola de productos pendientes de revisión.
-  useEffect(() => {
+  function load() {
     setLoading(true); setError(null);
-    getPendingProducts(userId)
+    getAdminProducts()
       .then(setProducts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [userId]);
+  }
 
-  // Reporta al componente raíz cuántos quedan pendientes (badge del menú).
+  useEffect(load, []);
+
   useEffect(() => {
     onPendingCount?.(products.filter((p) => p.status === 'Pendiente').length);
   }, [products, onPendingCount]);
 
-  // Muestra un aviso flotante temporal.
   function flash(message, warn) {
     setToast({ message, warn });
     setTimeout(() => setToast(null), 2600);
   }
 
-  // Aprueba o rechaza un producto contra el backend y refleja el nuevo estado.
-  async function moderate(product, status, reason) {
+  async function moderate(product, action) {
     try {
-      await setProductStatus(product.barcode, status, userId, reason);
-      setProducts((prev) => prev.map((x) => x.barcode === product.barcode ? { ...x, status, reason } : x));
-      flash(status === 'Aprobado' ? `«${product.name}» aprobado y publicado` : `«${product.name}» fue rechazado`, status === 'Rechazado');
+      if (action === 'Aprobado') {
+        await approveProduct(product.barcode, userId);
+      } else {
+        await rejectProduct(product.barcode, userId);
+      }
+      setProducts((prev) => prev.map((x) => x.barcode === product.barcode ? { ...x, status: action } : x));
+      flash(action === 'Aprobado' ? `«${product.name}» aprobado y publicado` : `«${product.name}» fue rechazado`, action === 'Rechazado');
     } catch (err) {
       flash(err.message || 'No se pudo actualizar el producto', true);
     }
@@ -234,7 +234,7 @@ export default function ProductsPage({ userId, onPendingCount }) {
         <RejectModal
           product={rejecting}
           onClose={() => setRejecting(null)}
-          onConfirm={(reason) => { const p = rejecting; setRejecting(null); moderate(p, 'Rechazado', reason); }}
+          onConfirm={(reason) => { const p = rejecting; setRejecting(null); moderate(p, 'Rechazado'); }}
         />
       )}
       {detail && <DetailModal product={detail} onClose={() => setDetail(null)} />}

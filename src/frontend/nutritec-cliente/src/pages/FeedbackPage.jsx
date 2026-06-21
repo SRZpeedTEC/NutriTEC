@@ -1,14 +1,11 @@
-// Manejar la retroalimentación del cliente: conversación con su nutricionista.
-
 import { useState, useEffect, useRef } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
-import { getClientThread, sendClientMessage } from '@nutritec/shared/services/feedbackService.js';
+import { getClientThread, sendClientMessage, markAsRead } from '@nutritec/shared/services/feedbackService.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
-// Vista principal: carga el hilo del cliente y permite enviar mensajes.
-export default function FeedbackPage({ clientId }) {
+export default function FeedbackPage({ clientId, nutritionistCode }) {
   const [thread, setThread] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,25 +13,28 @@ export default function FeedbackPage({ clientId }) {
   const [toast, setToast] = useState(null);
   const endRef = useRef(null);
 
-  // Carga el hilo de retroalimentación del cliente.
+  const hasConversation = nutritionistCode != null && clientId != null;
+
   useEffect(() => {
+    if (!hasConversation) { setLoading(false); return; }
     setLoading(true); setError(null);
-    getClientThread(clientId)
-      .then(setThread)
+    getClientThread(nutritionistCode, clientId)
+      .then((msgs) => {
+        setThread(msgs);
+        markAsRead(nutritionistCode, clientId, clientId).catch(() => {});
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [clientId]);
+  }, [nutritionistCode, clientId, hasConversation]);
 
-  // Mantiene el hilo desplazado al final cuando llegan mensajes.
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [thread.length]);
 
-  // Envía un mensaje al nutricionista y recarga el hilo.
   async function send(e) {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || !hasConversation) return;
     try {
-      await sendClientMessage(clientId, text.trim());
-      setThread(await getClientThread(clientId));
+      await sendClientMessage(nutritionistCode, clientId, clientId, text.trim());
+      setThread(await getClientThread(nutritionistCode, clientId));
       setText('');
     } catch (err) {
       setToast(err.message || 'No se pudo enviar el mensaje');
@@ -45,6 +45,19 @@ export default function FeedbackPage({ clientId }) {
   if (loading) {
     return <div className="nt-content"><div className="text-center py-5"><div className="spinner-border text-teal" role="status" /></div></div>;
   }
+
+  if (!hasConversation) {
+    return (
+      <div className="nt-content">
+        <div className="nt-empty">
+          <Icon name="chat" size={28} />
+          <div className="mt-2 fw-700">No tienes nutricionista asignado</div>
+          <div style={{ fontSize: '.88rem' }}>Cuando un nutricionista te asocie como paciente, podrás intercambiar mensajes aquí.</div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return <div className="nt-content"><div className="alert alert-danger">{error}</div></div>;
   }

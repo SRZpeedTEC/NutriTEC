@@ -1,22 +1,25 @@
-// Manejar el inicio de sesión del administrador.
-
 import { useState } from 'react';
 import logo from '@nutritec/shared/assets/logo.png';
-import { getAdminProfile } from '@nutritec/shared/services/profileService.js';
+import { loginAdmin } from '@nutritec/shared/services/authService.js';
 
-// Pantalla de acceso: valida credenciales y entrega la sesión al componente raíz.
 export default function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState('admin@nutritec.cr');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('andrea.mora@nutritec.test');
+  const [password, setPassword] = useState('AdminPass123!');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Inicia sesión: en la fase mock siembra la sesión desde el perfil del admin.
   async function submit(e) {
     e.preventDefault();
     setLoading(true);
-    // MOCK_LOGIN — reemplazar por authService.login(email, password) al conectar el backend.
-    const profile = await getAdminProfile();
-    onLogin(profile);
+    setError(null);
+    try {
+      const session = await loginAdmin({ email, password });
+      onLogin(session);
+    } catch (err) {
+      setError(err.message || 'Credenciales incorrectas');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -28,6 +31,7 @@ export default function LoginPage({ onLogin }) {
         </div>
         <h2 className="fw-800 mb-1 text-center">Iniciar sesión</h2>
         <p className="text-muted-soft mb-4 text-center">Acceso unificado para administradores de la plataforma.</p>
+        {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
         <form onSubmit={submit}>
           <div className="mb-3">
             <label className="form-label">Correo electrónico</label>
@@ -37,7 +41,10 @@ export default function LoginPage({ onLogin }) {
             <label className="form-label">Contraseña</label>
             <input type="password" className="form-control form-control-lg" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
-          <button type="submit" className="btn btn-primary btn-lg w-100" disabled={loading}>Entrar al panel</button>
+          <button type="submit" className="btn btn-primary btn-lg w-100" disabled={loading}>
+            {loading ? <span className="spinner-border spinner-border-sm me-2" /> : null}
+            Entrar al panel
+          </button>
         </form>
       </div>
     </div>
