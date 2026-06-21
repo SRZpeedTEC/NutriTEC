@@ -5,6 +5,7 @@ using NutriTEC.Application.DTOs.DailyConsume;
 using NutriTEC.Application.DTOs.Measurements;
 using NutriTEC.Application.DTOs.Products;
 using NutriTEC.Application.DTOs.Recipes;
+using NutriTEC.Application.Interfaces.Admin;
 using NutriTEC.Application.Interfaces.Auth;
 using NutriTEC.Application.Interfaces.DailyConsume;
 using NutriTEC.Application.Interfaces.Measurements;
@@ -25,6 +26,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Application services expose business workflows and the supporting validation/mapping rules.
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IMeasurementService, MeasurementService>();

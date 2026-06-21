@@ -3,7 +3,6 @@ namespace NutriTEC.Domain.Enums;
 public enum ProductStatus
 {
     Active,
-    Inactive,
     PendingReview,
     Rejected
 }
@@ -16,7 +15,6 @@ public static class ProductStatusExtensions
         return status switch
         {
             ProductStatus.Active => "ACTIVE",
-            ProductStatus.Inactive => "INACTIVE",
             ProductStatus.PendingReview => "PENDING_REVIEW",
             ProductStatus.Rejected => "REJECTED",
             _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported product status.")
@@ -29,7 +27,6 @@ public static class ProductStatusExtensions
         return value switch
         {
             "ACTIVE" => ProductStatus.Active,
-            "INACTIVE" => ProductStatus.Inactive,
             "PENDING_REVIEW" => ProductStatus.PendingReview,
             "REJECTED" => ProductStatus.Rejected,
             _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unsupported product status value.")

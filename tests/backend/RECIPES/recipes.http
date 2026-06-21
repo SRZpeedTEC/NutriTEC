@@ -162,8 +162,8 @@ Content-Type: application/json
   "multiplier": 1
 }
 
-### Try to add a recipe after manually marking one ingredient INACTIVE in SQL Server
-# Manual setup example: UPDATE product SET product_status = 'INACTIVE' WHERE bar_code = 'P-0003';
+### Try to add a recipe after manually marking one ingredient REJECTED in SQL Server
+# Manual setup example: UPDATE product SET product_status = 'REJECTED' WHERE bar_code = 'P-0003';
 POST {{baseUrl}}/api/recipes/{{recipeId}}/daily-consume
 Content-Type: application/json
 
