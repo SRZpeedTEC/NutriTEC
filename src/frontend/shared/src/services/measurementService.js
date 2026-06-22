@@ -6,7 +6,8 @@ import { apiFetch, jsonBody } from './api.js';
 function normalizeMeasurement(m) {
   return {
     clientId: m.clientId,
-    date: m.measurementDate,
+    // El backend manda la fecha como DateTime ("...T00:00:00"); se conserva solo "aaaa-mm-dd".
+    date: m.measurementDate ? String(m.measurementDate).slice(0, 10) : m.measurementDate,
     weight: m.bodyWeight,
     bmi: m.bodyMassIndex,
     waist: m.waist,

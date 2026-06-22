@@ -5,10 +5,11 @@ export const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "j
 export const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 export const WEEKDAYS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
 
-// Convierte una fecha ISO "aaaa-mm-dd" en un Date (o null si es inválida).
+// Convierte una fecha ISO en un Date (o null si es inválida).
+// Acepta "aaaa-mm-dd" y también ISO con hora ("aaaa-mm-ddTHH:MM:SS"): usa solo la parte de fecha.
 export function parseDate(value) {
   if (!value) return null;
-  const [y, m, d] = String(value).split("-").map(Number);
+  const [y, m, d] = String(value).slice(0, 10).split("-").map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d);
 }

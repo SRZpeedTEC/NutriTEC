@@ -60,14 +60,6 @@ function ProductCard({ p, onApprove, onReject, onDetail }) {
 
       <NutriGrid p={p} pad />
 
-      {p.status === 'Rechazado' && p.reason && (
-        <div className="px-3 pb-2">
-          <div className="nt-note" style={{ background: 'var(--nt-danger-bg)', borderColor: 'var(--nt-danger-line)', color: 'var(--nt-danger)' }}>
-            <Icon name="info" size={15} /> Motivo: {p.reason}
-          </div>
-        </div>
-      )}
-
       <div className="mt-auto px-3 pb-3 pt-1 d-flex gap-2">
         <button className="btn btn-soft btn-sm" onClick={() => onDetail(p)}><Icon name="search" size={14} /> Detalle</button>
         {p.status === 'Pendiente' ? (
@@ -84,16 +76,13 @@ function ProductCard({ p, onApprove, onReject, onDetail }) {
 }
 
 function RejectModal({ product, onClose, onConfirm }) {
-  const [reason, setReason] = useState('');
   return (
     <Modal title="Rechazar producto" sub={product.name} onClose={onClose}
       footer={<>
         <button className="btn btn-soft" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-danger-soft" onClick={() => onConfirm(reason)} disabled={!reason.trim()}><Icon name="x" size={15} /> Confirmar rechazo</button>
+        <button className="btn btn-danger-soft" onClick={onConfirm}><Icon name="x" size={15} /> Confirmar rechazo</button>
       </>}>
-      <p className="text-muted-soft mb-3">No quedará disponible para la comunidad. Indica el motivo del rechazo (se notificará a quien lo envió).</p>
-      <label className="form-label">Motivo del rechazo</label>
-      <textarea className="form-control" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ej. Los datos nutricionales no son verificables…" autoFocus />
+      <p className="text-muted-soft mb-0">El producto <strong>«{product.name}»</strong> quedará rechazado y no estará disponible para la comunidad. ¿Continuar?</p>
     </Modal>
   );
 }
@@ -234,7 +223,7 @@ export default function ProductsPage({ userId, onPendingCount }) {
         <RejectModal
           product={rejecting}
           onClose={() => setRejecting(null)}
-          onConfirm={(reason) => { const p = rejecting; setRejecting(null); moderate(p, 'Rechazado'); }}
+          onConfirm={() => { const p = rejecting; setRejecting(null); moderate(p, 'Rechazado'); }}
         />
       )}
       {detail && <DetailModal product={detail} onClose={() => setDetail(null)} />}

@@ -96,7 +96,9 @@ public class AuthService : IAuthService
             Address = request.Address,
             Photo = request.Photo,
             EncryptedCreditCard = request.EncryptedCreditCard,
-            PaymentMethod = request.PaymentMethod.ToUpperInvariant()
+            // El cobro siempre es por tarjeta; la frecuencia la elige el nutricionista.
+            PaymentMethod = "CARD",
+            BillingFrequency = request.BillingFrequency
         };
 
         await _nutritionistRepository.RegisterNutritionistAsync(user, nutritionist, cancellationToken);
@@ -183,6 +185,7 @@ public class AuthService : IAuthService
         request.Email = request.Email.Trim().ToLowerInvariant();
         request.IdNumber = request.IdNumber.Trim();
         request.Address = request.Address.Trim();
+        request.BillingFrequency = request.BillingFrequency.Trim().ToUpperInvariant();
     }
 
     private static ActivePlanSummaryResponse? CreateActivePlanSummary(PlanAssignment? activePlanAssignment)
