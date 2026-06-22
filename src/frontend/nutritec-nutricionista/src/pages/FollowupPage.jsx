@@ -244,6 +244,23 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
     return () => { alive = false; };
   }, [sel, nutritionistId]);
 
+  // Polling: actualiza el hilo del paciente seleccionado cada segundo en background.
+  useEffect(() => {
+    if (!sel) return;
+    const interval = setInterval(() => {
+      getPatientThread(nutritionistId, sel)
+        .then((msgs) => {
+          setThread((prev) => {
+            if (prev.length === msgs.length && prev.every((m, i) => m.text === msgs[i].text && m.date === msgs[i].date)) return prev;
+            markAsRead(nutritionistId, sel, nutritionistId).catch(() => {});
+            return msgs;
+          });
+        })
+        .catch(() => {});
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sel, nutritionistId]);
+
   async function send(text) {
     try {
       await sendPatientMessage(nutritionistId, sel, nutritionistId, text);

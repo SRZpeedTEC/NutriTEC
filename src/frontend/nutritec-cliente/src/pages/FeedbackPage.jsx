@@ -25,6 +25,20 @@ export default function FeedbackPage({ clientId, nutritionistCode }) {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    const interval = setInterval(() => {
+      getClientThread(nutritionistCode, clientId)
+        .then((msgs) => {
+          setThread((prev) => {
+            if (prev.length === msgs.length && prev.every((m, i) => m.text === msgs[i].text && m.date === msgs[i].date)) return prev;
+            markAsRead(nutritionistCode, clientId, clientId).catch(() => {});
+            return msgs;
+          });
+        })
+        .catch(() => {});
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [nutritionistCode, clientId, hasConversation]);
 
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [thread.length]);
