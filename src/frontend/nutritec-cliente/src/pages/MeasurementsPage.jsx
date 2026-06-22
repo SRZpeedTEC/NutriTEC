@@ -7,17 +7,23 @@ import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getHistory, createMeasurement } from '@nutritec/shared/services/measurementService.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
-const EMPTY_FORM = { date: '2026-06-08', waist: '', neck: '', hips: '', muscle: '', fat: '' };
+const EMPTY_FORM = { date: '2026-06-08', weight: '', bmi: '', waist: '', neck: '', hips: '', muscle: '', fat: '' };
 
 // Campos numéricos del formulario con su etiqueta y unidad.
 const FIELDS = [
+  { k: 'weight', l: 'Peso', u: 'kg' }, { k: 'bmi', l: 'IMC', u: 'kg/m²' },
   { k: 'waist', l: 'Cintura', u: 'cm' }, { k: 'neck', l: 'Cuello', u: 'cm' },
   { k: 'hips', l: 'Caderas', u: 'cm' }, { k: 'muscle', l: '% Músculo', u: '%' }, { k: 'fat', l: '% Grasa', u: '%' },
 ];
 
 // Convierte el formulario a la medida que espera el servicio (numéricos como número).
 function formToMeasurement(f) {
-  return { date: f.date, waist: Number(f.waist), neck: Number(f.neck), hips: Number(f.hips), muscle: Number(f.muscle), fat: Number(f.fat) };
+  return {
+    date: f.date,
+    weight: Number(f.weight), bmi: Number(f.bmi),
+    waist: Number(f.waist), neck: Number(f.neck), hips: Number(f.hips),
+    muscle: Number(f.muscle), fat: Number(f.fat),
+  };
 }
 
 // Vista principal: registra una medida nueva y consulta el historial.
@@ -105,16 +111,17 @@ export default function MeasurementsPage({ clientId }) {
           <SectionTitle sub="Tus medidas registradas">Historial</SectionTitle>
           <div className="table-responsive">
             <table className="table align-middle mb-0">
-              <thead><tr><th>Fecha</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músc.</th><th>% Grasa</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Peso</th><th>IMC</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músc.</th><th>% Grasa</th></tr></thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={i}>
                     <td className="fw-700">{formatDate(r.date)}</td>
+                    <td>{r.weight} kg</td><td>{r.bmi}</td>
                     <td>{r.waist} cm</td><td>{r.neck} cm</td><td>{r.hips} cm</td>
                     <td>{r.muscle}%</td><td>{r.fat}%</td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan="6"><div className="nt-empty">Aún no has registrado medidas.</div></td></tr>}
+                {rows.length === 0 && <tr><td colSpan="8"><div className="nt-empty">Aún no has registrado medidas.</div></td></tr>}
               </tbody>
             </table>
           </div>
