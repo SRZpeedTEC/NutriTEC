@@ -2,7 +2,7 @@
 @clientId = 1
 @otherClientId = 2
 @recipeId = 4
-@mealTimeTemplateId = 2
+@mealType = LUNCH
 @pendingBarCode = NT-RECIPE-PENDING-001
 
 # Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
@@ -148,7 +148,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "multiplier": 1
 }
 
@@ -158,7 +158,7 @@ Content-Type: application/json
 
 {
   "clientId": {{otherClientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "multiplier": 1
 }
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": 3,
+  "mealType": "DINNER",
   "multiplier": 1
 }
 

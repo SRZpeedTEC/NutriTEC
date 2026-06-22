@@ -6,7 +6,7 @@ import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getToday, searchProducts, addProduct, deleteProduct } from '@nutritec/shared/services/dailyConsumeService.js';
 import { getActivePlan } from '@nutritec/shared/services/planService.js';
-import { MEAL_TIMES, sumKcal } from '@nutritec/shared/utils/nutrition.js';
+import { MEAL_TIMES, DISPLAY_TO_MEAL_TYPE, sumKcal } from '@nutritec/shared/utils/nutrition.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
 // Vista principal: carga el consumo de hoy y el plan, y registra alimentos por tiempo de comida.
@@ -65,11 +65,10 @@ export default function DailyConsumptionPage({ clientId }) {
     setToday(await getToday(clientId));
   }
 
-  // Agrega un producto al tiempo de comida activo.
+  // Agrega un producto al tiempo de comida activo (identificado por su tipo, según el botón seleccionado).
   async function add(product) {
-    const meal = today.meals.find((m) => m.mealTime === active);
     try {
-      await addProduct({ clientId, mealTimeId: meal?.mealTimeId, productCode: product.barcode, quantity: 1 });
+      await addProduct({ clientId, mealType: DISPLAY_TO_MEAL_TYPE[active], productCode: product.barcode, quantity: 1 });
       setQ('');
       await reload();
     } catch (err) {

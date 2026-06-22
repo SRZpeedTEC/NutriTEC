@@ -52,9 +52,9 @@ export async function getToday(clientId) {
   return normalizeToday(await apiFetch(`/daily-consume/today/${clientId}`));
 }
 
-// POST /api/daily-consume/products
-export async function addProduct({ clientId, mealTimeId, productCode, quantity }) {
-  return apiFetch('/daily-consume/products', jsonBody('POST', { clientId, mealTimeId, productCode, quantity }));
+// POST /api/daily-consume/products — el tiempo de comida se manda por tipo (BREAKFAST, LUNCH, ...).
+export async function addProduct({ clientId, mealType, productCode, quantity }) {
+  return apiFetch('/daily-consume/products', jsonBody('POST', { clientId, mealType, productCode, quantity }));
 }
 
 // PUT /api/daily-consume/products/{mealTimeId}/{productCode}

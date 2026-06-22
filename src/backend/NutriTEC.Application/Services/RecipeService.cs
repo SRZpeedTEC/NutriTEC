@@ -165,7 +165,7 @@ public class RecipeService : IRecipeService
 
         return await _dailyConsumeService.AddProductBatchAsync(
             request.ClientId,
-            request.MealTimeId,
+            request.MealType,
             dailyProducts,
             cancellationToken);
     }

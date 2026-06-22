@@ -5,6 +5,9 @@ namespace NutriTEC.Application.Validators.DailyConsume;
 
 public class AddDailyProductRequestValidator : AbstractValidator<AddDailyProductRequest>
 {
+    private static readonly string[] ValidMealTypes =
+        ["BREAKFAST", "LUNCH", "DINNER", "SNACK", "OTHER"];
+
     public AddDailyProductRequestValidator()
     {
         // Add validation mirrors the existing foreign keys, barcode length, and positive quantity check.
@@ -12,9 +15,10 @@ public class AddDailyProductRequestValidator : AbstractValidator<AddDailyProduct
             .GreaterThan(0)
             .WithMessage("El identificador del cliente debe ser mayor que 0.");
 
-        RuleFor(request => request.MealTimeId)
-            .GreaterThan(0)
-            .WithMessage("El identificador del horario de comida debe ser mayor que 0.");
+        RuleFor(request => request.MealType)
+            .NotEmpty().WithMessage("El tipo de comida es obligatorio.")
+            .Must(type => ValidMealTypes.Contains(type, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("El tipo de comida debe ser: BREAKFAST, LUNCH, DINNER, SNACK u OTHER.");
 
         RuleFor(request => request.ProductCode)
             .NotEmpty()
