@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:5024
+@adminEmail = andrea.mora@nutritec.test
+@adminPassword = AdminPass123!
+@weeklyFrequency = WEEKLY
+@monthlyFrequency = MONTHLY
+@annualFrequency = ANNUAL
+@weeklyStart = 2026-04-06
+@weeklyEnd = 2026-04-12
+@monthlyStart = 2026-04-01
+@monthlyEnd = 2026-04-30
+@annualStart = 2026-01-01
+@annualEnd = 2026-12-31
+@weeklyPricePerPatient = 1
+@monthlyPricePerPatient = 4
+@annualPricePerPatient = 52
+
+# Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
+# Seed coverage:
+# - WEEKLY: nutritionists 3 and 4; client 6 is active all week, client 7 is partial, client 8 is outside the cycle.
+# - MONTHLY: nutritionists 1 and 5; client 1 and 9 are active all month, client 2 is partial, client 4 is outside the cycle.
+# - ANNUAL: nutritionists 2 and 6; clients 5 and 10 are active all year, client 3 is partial.
+
+### Login admin successfully
+POST {{baseUrl}}/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### 1. Weekly billing report
+GET {{baseUrl}}/api/admin/billing-report?frequency={{weeklyFrequency}}&cycleStartDate={{weeklyStart}}&cycleEndDate={{weeklyEnd}}&pricePerPatient={{weeklyPricePerPatient}}
+
+### 2. Monthly billing report
+GET {{baseUrl}}/api/admin/billing-report?frequency={{monthlyFrequency}}&cycleStartDate={{monthlyStart}}&cycleEndDate={{monthlyEnd}}&pricePerPatient={{monthlyPricePerPatient}}
+
+### 3. Annual billing report
+GET {{baseUrl}}/api/admin/billing-report?frequency={{annualFrequency}}&cycleStartDate={{annualStart}}&cycleEndDate={{annualEnd}}&pricePerPatient={{annualPricePerPatient}}
+
+### 4. Verify monthly 5 percent discount
+# Expected with seed: MONTHLY response has discountRate 0.0500 and discountApplied > 0.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{monthlyFrequency}}&cycleStartDate={{monthlyStart}}&cycleEndDate={{monthlyEnd}}
+
+### 5. Verify annual 10 percent discount
+# Expected with seed: ANNUAL response has discountRate 0.1000 and discountApplied > 0.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{annualFrequency}}&cycleStartDate={{annualStart}}&cycleEndDate={{annualEnd}}
+
+### 6. Verify weekly has no discount
+# Expected with seed: WEEKLY response has discountRate 0.0000 and discountApplied 0.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{weeklyFrequency}}&cycleStartDate={{weeklyStart}}&cycleEndDate={{weeklyEnd}}
+
+### 7. Multiple nutritionists grouped by billing frequency
+# Expected with seed: response includes WEEKLY, MONTHLY, and ANNUAL nutritionists ordered by billingFrequency.
+GET {{baseUrl}}/api/admin/billing-report?cycleStartDate={{annualStart}}&cycleEndDate={{annualEnd}}
+
+### 8. Patient active for the whole cycle
+# Expected with seed: MONTHLY client 1 has activeDays 30 and prorationFactor 1.000000.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{monthlyFrequency}}&cycleStartDate={{monthlyStart}}&cycleEndDate={{monthlyEnd}}
+
+### 9. Patient active partially
+# Expected with seed: MONTHLY client 2 starts on 2026-04-16 and has prorationFactor below 1.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{monthlyFrequency}}&cycleStartDate={{monthlyStart}}&cycleEndDate={{monthlyEnd}}
+
+### 10. Patient outside the cycle is not charged
+# Expected with seed: WEEKLY client 8 ended on 2026-04-05 and must not appear.
+GET {{baseUrl}}/api/admin/billing-report?frequency={{weeklyFrequency}}&cycleStartDate={{weeklyStart}}&cycleEndDate={{weeklyEnd}}
+
+### 11. Inverted dates must fail
+GET {{baseUrl}}/api/admin/billing-report?frequency={{monthlyFrequency}}&cycleStartDate={{monthlyEnd}}&cycleEndDate={{monthlyStart}}&pricePerPatient={{monthlyPricePerPatient}}
+
+### 12. Invalid frequency must fail
+GET {{baseUrl}}/api/admin/billing-report?frequency=DAILY&cycleStartDate={{weeklyStart}}&cycleEndDate={{weeklyEnd}}&pricePerPatient={{weeklyPricePerPatient}}
+
+### 12b. Invalid price for selected frequency must fail
+GET {{baseUrl}}/api/admin/billing-report?frequency={{weeklyFrequency}}&cycleStartDate={{weeklyStart}}&cycleEndDate={{weeklyEnd}}&pricePerPatient={{monthlyPricePerPatient}}
+
+### 12c. Non-positive price must fail
+GET {{baseUrl}}/api/admin/billing-report?frequency={{annualFrequency}}&cycleStartDate={{annualStart}}&cycleEndDate={{annualEnd}}&pricePerPatient=0

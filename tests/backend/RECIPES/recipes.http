@@ -66,7 +66,7 @@ Content-Type: application/json
   "sodium": 10,
   "carbohydrates": 15,
   "protein": 5,
-  "vitamins": 1,
+  "vitamins": "C,B12",
   "calcium": 5,
   "iron": 1,
   "userId": 1

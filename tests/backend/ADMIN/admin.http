@@ -39,7 +39,7 @@ Content-Type: application/json
   "sodium": 35,
   "carbohydrates": 18,
   "protein": 6,
-  "vitamins": 1,
+  "vitamins": "C,B12",
   "calcium": 20,
   "iron": 1,
   "userId": {{submitterUserId}}
@@ -59,7 +59,7 @@ Content-Type: application/json
   "sodium": 80,
   "carbohydrates": 25,
   "protein": 8,
-  "vitamins": 2,
+  "vitamins": "A,D,E",
   "calcium": 30,
   "iron": 1.5,
   "userId": {{submitterUserId}}

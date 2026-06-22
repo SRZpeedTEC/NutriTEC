@@ -13,6 +13,10 @@ public interface IAdminService
         string? productStatus,
         CancellationToken cancellationToken);
 
+    Task<AdminBillingReportResponse> GetBillingReportAsync(
+        AdminBillingReportRequest request,
+        CancellationToken cancellationToken);
+
     Task<AdminProductResponse> GetProductByBarCodeAsync(
         string barCode,
         CancellationToken cancellationToken);

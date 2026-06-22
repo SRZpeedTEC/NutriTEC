@@ -31,7 +31,7 @@ public class RecipeProductDetail
 
     public decimal CalculatedProtein { get; set; }
 
-    public decimal CalculatedVitamins { get; set; }
+    public string CalculatedVitamins { get; set; } = string.Empty;
 
     public decimal CalculatedCalcium { get; set; }
 

@@ -23,7 +23,7 @@ SELECT
     CAST(ROUND(p.sodium * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_sodium,
     CAST(ROUND(p.carbohydrates * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_carbohydrates,
     CAST(ROUND(p.protein * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_protein,
-    CAST(ROUND(p.vitamins * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_vitamins,
+    p.vitamins AS calculated_vitamins,
     CAST(ROUND(p.calcium * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_calcium,
     CAST(ROUND(p.iron * rp.quantity, 2) AS NUMERIC(20, 2)) AS calculated_iron
 FROM dbo.recipe AS r
