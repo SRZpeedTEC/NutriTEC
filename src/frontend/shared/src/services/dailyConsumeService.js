@@ -1,8 +1,6 @@
 // Manejar la búsqueda de productos y el registro diario de consumo.
 
 import { apiFetch, jsonBody } from './api.js';
-import PRODUCTS from '../data/products.js';
-import TODAY from '../data/todayConsumption.js';
 
 // Traduce un producto de búsqueda del backend al formato corto de la app.
 function normalizeSearch(p) {
@@ -42,24 +40,15 @@ function normalizeToday(data) {
 
 // GET /api/daily-consume/products/search?query={query}
 export async function searchProducts(query) {
-  try {
-    const data = await apiFetch(`/daily-consume/products/search?query=${encodeURIComponent(query)}`);
-    return data.map(normalizeSearch);
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/daily-consume/products/search
-    const needle = query.trim().toLowerCase();
-    return PRODUCTS.filter((p) => p.name.toLowerCase().includes(needle));
-  }
+  const term = query.trim();
+  if (!term) return [];
+  const data = await apiFetch(`/daily-consume/products/search?query=${encodeURIComponent(term)}`);
+  return data.map(normalizeSearch);
 }
 
 // GET /api/daily-consume/today/{clientId}
 export async function getToday(clientId) {
-  try {
-    return normalizeToday(await apiFetch(`/daily-consume/today/${clientId}`));
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/daily-consume/today/{clientId}
-    return TODAY;
-  }
+  return normalizeToday(await apiFetch(`/daily-consume/today/${clientId}`));
 }
 
 // POST /api/daily-consume/products

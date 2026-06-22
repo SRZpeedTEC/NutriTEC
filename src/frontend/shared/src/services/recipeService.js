@@ -1,7 +1,6 @@
 // Manejar la creación, consulta y edición de recetas del cliente.
 
 import { apiFetch, jsonBody } from './api.js';
-import RECIPES from '../data/recipes.js';
 
 // Traduce un ingrediente de receta del backend al formato corto de la app.
 function normalizeIngredient(i) {
@@ -61,13 +60,8 @@ export async function createRecipe({ clientId, name, ingredients }) {
 
 // GET /api/recipes/client/{clientId}
 export async function getByClient(clientId) {
-  try {
-    const data = await apiFetch(`/recipes/client/${clientId}`);
-    return data.map(normalizeSummary);
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/recipes/client/{clientId}
-    return RECIPES;
-  }
+  const data = await apiFetch(`/recipes/client/${clientId}`);
+  return data.map(normalizeSummary);
 }
 
 // GET /api/recipes/{recipeId}?clientId={clientId}

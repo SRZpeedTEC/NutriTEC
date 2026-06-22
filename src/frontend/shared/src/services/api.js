@@ -30,7 +30,10 @@ export async function apiFetch(path, options) {
     throw new Error(message);
   }
 
-  return res.json();
+  // 204 No Content o cuerpo vacío (p. ej. "sin plan activo"): no hay JSON que parsear.
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 // Arma las opciones de una petición con cuerpo JSON (POST/PUT).

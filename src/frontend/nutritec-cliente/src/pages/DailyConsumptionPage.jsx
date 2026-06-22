@@ -19,16 +19,40 @@ export default function DailyConsumptionPage({ clientId }) {
 
   const [active, setActive] = useState('Desayuno');
   const [q, setQ] = useState('');
+  const [searching, setSearching] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Carga el consumo de hoy, el plan y el catálogo de productos.
+  // Carga el consumo de hoy y el plan activo.
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getToday(clientId), getActivePlan(clientId), searchProducts('')])
-      .then(([td, pl, cat]) => { setToday(td); setPlan(pl); setCatalog(cat); })
+    Promise.all([getToday(clientId), getActivePlan(clientId)])
+      .then(([td, pl]) => { setToday(td); setPlan(pl); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [clientId]);
+
+  // Busca productos aprobados contra el backend cuando el usuario escribe.
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) {
+      setCatalog([]);
+      setSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchProducts(term)
+        .then(setCatalog)
+        .catch((err) => {
+          setCatalog([]);
+          flash(err.message || 'No se pudo buscar alimentos', true);
+        })
+        .finally(() => setSearching(false));
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [q]);
 
   // Muestra un aviso flotante temporal.
   function flash(message, warn) {
@@ -78,11 +102,7 @@ export default function DailyConsumptionPage({ clientId }) {
   const dayTotal = today.meals.reduce((a, m) => a + sumKcal(m.items), 0);
   const maxKcal = plan?.meals.find((m) => m.mealTime === active)?.maxKcal ?? 0;
 
-  const results = catalog.filter((p) => {
-    const t = q.trim().toLowerCase();
-    if (!t) return false;
-    return p.name.toLowerCase().includes(t) || p.barcode.includes(t);
-  });
+  const results = catalog;
 
   return (
     <div className="nt-content">
@@ -110,6 +130,7 @@ export default function DailyConsumptionPage({ clientId }) {
             <div className="input-group input-group-lg mb-3">
               <span className="input-group-text"><Icon name="search" size={18} /></span>
               <input className="form-control" placeholder="Ej. avena o 7441001000017" value={q} onChange={(e) => setQ(e.target.value)} />
+              {searching && <span className="input-group-text"><span className="spinner-border spinner-border-sm" /></span>}
             </div>
             {q.trim() === '' && (
               <div className="nt-empty">
@@ -128,7 +149,10 @@ export default function DailyConsumptionPage({ clientId }) {
                   <button className="btn btn-primary btn-sm px-3" onClick={() => add(p)}><Icon name="plus" size={15} /></button>
                 </div>
               ))}
-              {q.trim() !== '' && results.length === 0 && (
+              {q.trim().length === 1 && (
+                <div className="nt-empty">Escribe al menos 2 caracteres para buscar alimentos aprobados.</div>
+              )}
+              {q.trim().length >= 2 && !searching && results.length === 0 && (
                 <div className="nt-empty">No se encontró «{q}».<br /><span style={{ fontSize: '.85rem' }}>Puedes crearlo en <strong>Productos</strong> o como <strong>Receta</strong>.</span></div>
               )}
             </div>

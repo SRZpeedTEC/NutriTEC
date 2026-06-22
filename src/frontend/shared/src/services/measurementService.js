@@ -1,7 +1,6 @@
 // Manejar el registro y la consulta de medidas corporales.
 
 import { apiFetch, jsonBody } from './api.js';
-import MEASUREMENTS from '../data/measurements.js';
 
 // Traduce una medida del backend al formato corto de la app.
 function normalizeMeasurement(m) {
@@ -47,29 +46,18 @@ export async function updateMeasurement(clientId, date, measurement) {
 
 // GET /api/measurements/client/{clientId}
 export async function getHistory(clientId) {
-  try {
-    const data = await apiFetch(`/measurements/client/${clientId}`);
-    return data.map(normalizeMeasurement);
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/measurements/client/{clientId}
-    return MEASUREMENTS;
-  }
+  const data = await apiFetch(`/measurements/client/${clientId}`);
+  return data.map(normalizeMeasurement);
 }
 
 // GET /api/measurements/report/{clientId}?startDate={startDate}&endDate={endDate}
 export async function getReport(clientId, startDate, endDate) {
-  try {
-    const data = await apiFetch(`/measurements/report/${clientId}?startDate=${startDate}&endDate=${endDate}`);
-    return {
-      clientId: data.clientId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      recordCount: data.recordCount,
-      measurements: (data.measurements ?? []).map(normalizeMeasurement),
-    };
-  } catch {
-    // MOCK_FALLBACK — quitar al conectar GET /api/measurements/report/{clientId}
-    const measurements = MEASUREMENTS.filter((m) => m.date >= startDate && m.date <= endDate);
-    return { clientId, startDate, endDate, recordCount: measurements.length, measurements };
-  }
+  const data = await apiFetch(`/measurements/report/${clientId}?startDate=${startDate}&endDate=${endDate}`);
+  return {
+    clientId: data.clientId,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    recordCount: data.recordCount,
+    measurements: (data.measurements ?? []).map(normalizeMeasurement),
+  };
 }

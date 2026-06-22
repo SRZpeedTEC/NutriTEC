@@ -17,17 +17,45 @@ export default function RecipesPage({ clientId }) {
 
   const [name, setName] = useState('');
   const [ingredients, setIngredients] = useState([]);
-  const [sel, setSel] = useState('');
+  const [ingredientQuery, setIngredientQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Carga las recetas del cliente y el catálogo de productos.
+  // Carga las recetas del cliente.
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getByClient(clientId), searchProducts('')])
-      .then(([recs, cat]) => { setRecipes(recs); setCatalog(cat); setSel(cat[0]?.barcode); })
+    getByClient(clientId)
+      .then(setRecipes)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [clientId]);
+
+  // Busca productos aprobados para agregarlos como ingredientes.
+  useEffect(() => {
+    const term = ingredientQuery.trim();
+    if (term.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchProducts(term)
+        .then((items) => {
+          setSearchResults(items);
+          setCatalog((prev) => mergeProducts(prev, items));
+        })
+        .catch((err) => {
+          setSearchResults([]);
+          flash(err.message || 'No se pudo buscar ingredientes', true);
+        })
+        .finally(() => setSearching(false));
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [ingredientQuery]);
 
   // Muestra un aviso flotante temporal.
   function flash(message, warn) {
@@ -35,7 +63,18 @@ export default function RecipesPage({ clientId }) {
     setTimeout(() => setToast(null), 2600);
   }
 
-  const addIngredient = () => { if (sel && !ingredients.some((i) => i.barcode === sel)) setIngredients((p) => [...p, { barcode: sel, portions: 1 }]); };
+  function mergeProducts(current, incoming) {
+    const byCode = new Map(current.map((p) => [p.barcode, p]));
+    incoming.forEach((p) => byCode.set(p.barcode, p));
+    return Array.from(byCode.values());
+  }
+
+  const addIngredient = (product) => {
+    setCatalog((prev) => mergeProducts(prev, [product]));
+    setIngredients((prev) => prev.some((i) => i.barcode === product.barcode)
+      ? prev
+      : [...prev, { barcode: product.barcode, portions: 1 }]);
+  };
   const setPortions = (bc, v) => setIngredients((p) => p.map((i) => i.barcode === bc ? { ...i, portions: parseFloat(v) || 0 } : i));
   const removeIngredient = (bc) => setIngredients((p) => p.filter((i) => i.barcode !== bc));
 
@@ -83,11 +122,27 @@ export default function RecipesPage({ clientId }) {
               <input className="form-control form-control-lg" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Gallo Pinto" />
             </div>
             <label className="form-label">Agregar ingrediente</label>
-            <div className="input-group mb-3">
-              <select className="form-select" value={sel} onChange={(e) => setSel(e.target.value)}>
-                {catalog.map((p) => <option key={p.barcode} value={p.barcode}>{p.name} ({p.portion}{p.unit})</option>)}
-              </select>
-              <button className="btn btn-primary px-3" onClick={addIngredient}><Icon name="plus" size={16} /></button>
+            <div className="input-group mb-2">
+              <span className="input-group-text"><Icon name="search" size={16} /></span>
+              <input className="form-control" value={ingredientQuery} onChange={(e) => setIngredientQuery(e.target.value)} placeholder="Buscar por nombre o código" />
+              {searching && <span className="input-group-text"><span className="spinner-border spinner-border-sm" /></span>}
+            </div>
+            <div className="d-flex flex-column gap-2 mb-3">
+              {ingredientQuery.trim().length === 1 && (
+                <div className="nt-empty">Escribe al menos 2 caracteres para buscar ingredientes.</div>
+              )}
+              {ingredientQuery.trim().length >= 2 && !searching && searchResults.length === 0 && (
+                <div className="nt-empty">Sin ingredientes aprobados para «{ingredientQuery}».</div>
+              )}
+              {searchResults.map((p) => (
+                <div key={p.barcode} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ border: '1px solid var(--nt-line)' }}>
+                  <div className="min-w-0">
+                    <div className="fw-700 text-truncate">{p.name}</div>
+                    <div className="text-muted-soft" style={{ fontSize: '.8rem' }}>{p.portion}{p.unit} · {p.energy} kcal · {p.barcode}</div>
+                  </div>
+                  <button className="btn btn-primary btn-sm px-3" onClick={() => addIngredient(p)}><Icon name="plus" size={15} /></button>
+                </div>
+              ))}
             </div>
 
             {ingredients.length === 0 ? <div className="nt-empty">Agrega productos para crear tu receta.</div> : (

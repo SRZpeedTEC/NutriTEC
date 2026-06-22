@@ -36,18 +36,42 @@ export default function ProductsPage({ userId }) {
   const [editing, setEditing] = useState(null); // null | barcode original
   const [form, setForm] = useState(EMPTY_FORM);
   const [q, setQ] = useState('');
+  const [searching, setSearching] = useState(false);
   const [toast, setToast] = useState(null);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  // Carga mis productos enviados y el catálogo aprobado.
+  // Carga mis productos enviados.
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getPendingProducts(userId), searchProducts('')])
-      .then(([mine, cat]) => { setMyProducts(mine); setCatalog(cat); })
+    getPendingProducts(userId)
+      .then(setMyProducts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [userId]);
+
+  // Busca productos aprobados contra el backend cuando el usuario escribe.
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) {
+      setCatalog([]);
+      setSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchProducts(term)
+        .then(setCatalog)
+        .catch((err) => {
+          setCatalog([]);
+          flash(err.message || 'No se pudo buscar productos aprobados', true);
+        })
+        .finally(() => setSearching(false));
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [q]);
 
   // Muestra un aviso flotante temporal.
   function flash(message, warn) {
@@ -95,12 +119,6 @@ export default function ProductsPage({ userId }) {
   if (error) {
     return <div className="nt-content"><div className="alert alert-danger">{error}</div></div>;
   }
-
-  const filtered = catalog.filter((p) => {
-    const t = q.trim().toLowerCase();
-    if (!t) return true;
-    return p.name.toLowerCase().includes(t) || p.barcode.includes(t);
-  });
 
   return (
     <div className="nt-content">
@@ -183,12 +201,13 @@ export default function ProductsPage({ userId }) {
         <div className="input-group mb-3" style={{ maxWidth: 360 }}>
           <span className="input-group-text"><Icon name="search" size={16} /></span>
           <input className="form-control" placeholder="Buscar por nombre o código" value={q} onChange={(e) => setQ(e.target.value)} />
+          {searching && <span className="input-group-text"><span className="spinner-border spinner-border-sm" /></span>}
         </div>
         <div className="table-responsive">
           <table className="table align-middle mb-0">
             <thead><tr><th>Producto</th><th>Código</th><th>Porción</th><th>Energía</th><th>Carbs</th><th>Proteína</th><th>Grasa</th></tr></thead>
             <tbody>
-              {filtered.map((p) => (
+              {catalog.map((p) => (
                 <tr key={p.barcode}>
                   <td className="fw-700">{p.name}</td>
                   <td>{p.barcode}</td>
@@ -197,7 +216,8 @@ export default function ProductsPage({ userId }) {
                   <td>{p.carbs} g</td><td>{p.protein} g</td><td>{p.fat} g</td>
                 </tr>
               ))}
-              {filtered.length === 0 && <tr><td colSpan="7"><div className="nt-empty">Sin coincidencias.</div></td></tr>}
+              {q.trim().length < 2 && <tr><td colSpan="7"><div className="nt-empty">Escribe al menos 2 caracteres para buscar productos aprobados.</div></td></tr>}
+              {q.trim().length >= 2 && !searching && catalog.length === 0 && <tr><td colSpan="7"><div className="nt-empty">Sin coincidencias.</div></td></tr>}
             </tbody>
           </table>
         </div>
