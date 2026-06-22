@@ -16,6 +16,11 @@ public interface IProductRepository
         IReadOnlyCollection<string> barCodes,
         CancellationToken cancellationToken);
 
+    // Name-only lookup avoids materializing full Product entities when only the display name is needed.
+    Task<IReadOnlyDictionary<string, string>> GetNamesByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken);
+
     // Daily consumption searches expose only active products matching name or barcode.
     Task<IReadOnlyCollection<Product>> SearchActiveAsync(string query, CancellationToken cancellationToken);
 

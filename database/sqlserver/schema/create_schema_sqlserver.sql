@@ -143,6 +143,8 @@ CREATE TABLE plan_assignment (
 GO
 
 -- A filtered unique index preserves assignment history while allowing only one active plan per client.
+-- QUOTED_IDENTIFIER ON is required by SQL Server for filtered indexes.
+SET QUOTED_IDENTIFIER ON;
 CREATE UNIQUE INDEX uq_plan_assignment_active_client
 ON plan_assignment (client_id)
 WHERE assignment_status = 'ACTIVE';

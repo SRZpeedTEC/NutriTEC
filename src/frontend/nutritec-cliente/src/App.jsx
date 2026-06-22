@@ -12,6 +12,7 @@ import ProgressReportPage from './pages/ProgressReportPage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
 import RecipesPage from './pages/RecipesPage.jsx';
 import FeedbackPage from './pages/FeedbackPage.jsx';
+import { getActivePlan } from '@nutritec/shared/services/planService.js';
 
 // Clave bajo la que se persiste la sesión en el navegador.
 const SESSION_KEY = 'nutritec_session';
@@ -49,12 +50,22 @@ export default function App() {
   const [authView, setAuthView] = useState('login');
   const [screen, setScreen] = useState('plan');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [nutritionistCode, setNutritionistCode] = useState(null);
 
   // Persiste la sesión para sobrevivir reinicios; al cerrar sesión la borra.
   useEffect(() => {
     if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     else localStorage.removeItem(SESSION_KEY);
   }, [session]);
+
+  // Carga el código del nutricionista asignado al cliente para el foro de retroalimentación.
+  useEffect(() => {
+    const cid = session?.clientId;
+    if (!cid) { setNutritionistCode(null); return; }
+    getActivePlan(cid)
+      .then((plan) => setNutritionistCode(plan?.nutritionistCode ?? null))
+      .catch(() => setNutritionistCode(null));
+  }, [session?.clientId]);
 
   if (!session) {
     return authView === 'register'
@@ -89,7 +100,7 @@ export default function App() {
         {screen === 'reporte' && <ProgressReportPage clientId={clientId} userName={session.name} />}
         {screen === 'productos' && <ProductsPage userId={clientId} />}
         {screen === 'recetas' && <RecipesPage clientId={clientId} />}
-        {screen === 'seguimiento' && <FeedbackPage clientId={clientId} nutritionistCode={session.nutritionistCode ?? null} />}
+        {screen === 'seguimiento' && <FeedbackPage clientId={clientId} nutritionistCode={nutritionistCode} />}
       </main>
     </div>
   );

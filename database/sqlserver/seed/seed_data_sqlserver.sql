@@ -216,6 +216,7 @@ VALUES
     ('2025-01-01', NULL, 'ACTIVE', 6, 10);
 GO
 
+SET QUOTED_IDENTIFIER ON;
 SET IDENTITY_INSERT plan_assignment ON;
 
 INSERT INTO plan_assignment (

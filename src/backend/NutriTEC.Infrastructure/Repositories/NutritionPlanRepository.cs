@@ -26,7 +26,6 @@ public class NutritionPlanRepository : INutritionPlanRepository
             .Include(p => p.PlanMealTimes)
                 .ThenInclude(pmt => pmt.MealTime)
                     .ThenInclude(mt => mt.Products)
-                        .ThenInclude(mtp => mtp.Product)
             .Include(p => p.PlanAssignments)
             .FirstOrDefaultAsync(p => p.PlanId == planId, cancellationToken);
     }
@@ -52,7 +51,6 @@ public class NutritionPlanRepository : INutritionPlanRepository
             .Include(p => p.PlanMealTimes)
                 .ThenInclude(pmt => pmt.MealTime)
                     .ThenInclude(mt => mt.Products)
-                        .ThenInclude(mtp => mtp.Product)
             .FirstOrDefaultAsync(p => p.PlanId == assignment.PlanId, cancellationToken);
 
         return (assignment, plan);

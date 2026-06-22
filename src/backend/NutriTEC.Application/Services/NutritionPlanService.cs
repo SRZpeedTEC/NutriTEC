@@ -235,6 +235,15 @@ public class NutritionPlanService : INutritionPlanService
 
         if (assignment is null || plan is null) return null;
 
+        // Fetch product names in a separate query to avoid EF Core type-mapping issues
+        // when joining meal_time_product (decimal columns) with product (enum+HasConversion).
+        var allBarCodes = plan.PlanMealTimes
+            .SelectMany(pmt => pmt.MealTime.Products.Select(p => p.ProductCode))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var productNameMap = await _productRepository.GetNamesByBarCodesAsync(allBarCodes, cancellationToken);
+
         return new ClientActivePlanDetailResponse
         {
             AssignmentId = assignment.AssignmentId,
@@ -252,7 +261,7 @@ public class NutritionPlanService : INutritionPlanService
                 Products = pmt.MealTime.Products.Select(p => new NutritionPlanMealTimeProductResponse
                 {
                     ProductCode = p.ProductCode,
-                    ProductName = p.Product?.ProductName ?? string.Empty,
+                    ProductName = productNameMap.TryGetValue(p.ProductCode, out var name) ? name : string.Empty,
                     Quantity = p.Quantity,
                     Calories = p.Calories
                 }).ToList()
@@ -332,7 +341,6 @@ public class NutritionPlanService : INutritionPlanService
                 Products = pmt.MealTime.Products.Select(p => new NutritionPlanMealTimeProductResponse
                 {
                     ProductCode = p.ProductCode,
-                    ProductName = p.Product?.ProductName ?? string.Empty,
                     Quantity = p.Quantity,
                     Calories = p.Calories
                 }).ToList()
