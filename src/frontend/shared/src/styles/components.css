@@ -87,8 +87,13 @@
   position: absolute; z-index: 60; top: calc(100% + 8px); left: 0; width: 288px; max-width: 90vw; background: #fff;
   border: 1px solid var(--nt-line); border-radius: 14px; box-shadow: 0 18px 44px rgba(13, 40, 36, .14); padding: .85rem;
 }
+.nt-dp-pop-right { left: auto; right: 0; }
 .nt-dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
 .nt-dp-title { font-weight: 700; font-size: .95rem; text-transform: capitalize; }
+.nt-dp-sel { display: flex; gap: .35rem; align-items: center; }
+.nt-dp-sel select { appearance: none; -webkit-appearance: none; border: 1px solid var(--nt-line); border-radius: 9px; background: #fff; font-weight: 700; font-size: .88rem; color: var(--nt-ink); padding: .28rem .55rem; cursor: pointer; text-transform: capitalize; }
+.nt-dp-sel select:hover { border-color: var(--nt-teal-300); }
+.nt-dp-sel select:focus { outline: none; border-color: var(--nt-teal-500); box-shadow: 0 0 0 .2rem rgba(20, 184, 166, .15); }
 .nt-dp-nav { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--nt-line); background: #fff; font-size: 1.2rem; line-height: 1; color: var(--nt-teal-700); display: grid; place-items: center; cursor: pointer; }
 .nt-dp-nav:hover { background: var(--nt-teal-50); border-color: var(--nt-teal-300); }
 .nt-dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -127,7 +132,7 @@
 
 /* ---- Modal ---- */
 .nt-modal-backdrop { position: fixed; inset: 0; z-index: 1080; background: rgba(13, 40, 36, .4); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 1rem; overflow-y: auto; }
-.nt-modal { width: 100%; background: #fff; border-radius: 18px; box-shadow: 0 30px 70px rgba(13, 40, 36, .28); overflow: hidden; }
+.nt-modal { width: 100%; background: #fff; border-radius: 18px; box-shadow: 0 30px 70px rgba(13, 40, 36, .28); overflow: visible; }
 .nt-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--nt-line); }
 .nt-modal-x { border: none; background: var(--nt-teal-50); color: var(--nt-muted); width: 34px; height: 34px; border-radius: 10px; font-size: 1.4rem; line-height: 1; cursor: pointer; flex: 0 0 34px; }
 .nt-modal-x:hover { background: var(--nt-teal-100); color: var(--nt-ink); }

@@ -6,6 +6,7 @@ import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getToday, searchProducts, addProduct, deleteProduct } from '@nutritec/shared/services/dailyConsumeService.js';
 import { getActivePlan } from '@nutritec/shared/services/planService.js';
+import { getByClient, addToDailyConsume } from '@nutritec/shared/services/recipeService.js';
 import { MEAL_TIMES, DISPLAY_TO_MEAL_TYPE, sumKcal } from '@nutritec/shared/utils/nutrition.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
@@ -18,8 +19,12 @@ export default function DailyConsumptionPage({ clientId }) {
   const [error, setError] = useState(null);
 
   const [active, setActive] = useState('Desayuno');
+  const [mode, setMode] = useState('alimentos'); // panel de búsqueda: 'alimentos' | 'recetas'
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
+  const [recipes, setRecipes] = useState([]);
+  const [recipeQ, setRecipeQ] = useState('');
+  const [recipesLoading, setRecipesLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Carga el consumo de hoy y el plan activo.
@@ -29,6 +34,17 @@ export default function DailyConsumptionPage({ clientId }) {
       .then(([td, pl]) => { setToday(td); setPlan(pl); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }, [clientId]);
+
+  // Carga las recetas del cliente para poder sumarlas al día (no bloquea la vista si falla).
+  useEffect(() => {
+    let ignore = false;
+    setRecipesLoading(true);
+    getByClient(clientId)
+      .then((list) => { if (!ignore) setRecipes(list); })
+      .catch(() => { if (!ignore) setRecipes([]); })
+      .finally(() => { if (!ignore) setRecipesLoading(false); });
+    return () => { ignore = true; };
   }, [clientId]);
 
   // Busca productos aprobados contra el backend cuando el usuario escribe.
@@ -76,6 +92,17 @@ export default function DailyConsumptionPage({ clientId }) {
     }
   }
 
+  // Agrega una receta al tiempo de comida activo: el backend expande sus ingredientes.
+  async function addRecipe(recipe) {
+    try {
+      await addToDailyConsume(recipe.recipeId, { clientId, mealType: DISPLAY_TO_MEAL_TYPE[active], multiplier: 1 });
+      await reload();
+      flash(`«${recipe.name}» agregada a ${active}`);
+    } catch (err) {
+      flash(err.message || 'No se pudo agregar la receta', true);
+    }
+  }
+
   // Quita un producto del tiempo de comida activo.
   async function remove(item) {
     const meal = today.meals.find((m) => m.mealTime === active);
@@ -102,6 +129,8 @@ export default function DailyConsumptionPage({ clientId }) {
   const maxKcal = plan?.meals.find((m) => m.mealTime === active)?.maxKcal ?? 0;
 
   const results = catalog;
+  const recipeTerm = recipeQ.trim().toLowerCase();
+  const filteredRecipes = recipeTerm ? recipes.filter((r) => r.name.toLowerCase().includes(recipeTerm)) : recipes;
 
   return (
     <div className="nt-content">
@@ -125,36 +154,78 @@ export default function DailyConsumptionPage({ clientId }) {
       <div className="row g-4">
         <div className="col-lg-5">
           <div className="nt-card nt-card-pad">
-            <SectionTitle sub="Por nombre o código de barras">Buscar alimento</SectionTitle>
-            <div className="input-group input-group-lg mb-3">
-              <span className="input-group-text"><Icon name="search" size={18} /></span>
-              <input className="form-control" placeholder="Ej. avena o 7441001000017" value={q} onChange={(e) => setQ(e.target.value)} />
-              {searching && <span className="input-group-text"><span className="spinner-border spinner-border-sm" /></span>}
+            <SectionTitle sub={`Se sumará a ${active}`}>Agregar alimento o receta</SectionTitle>
+            <div className="nt-seg mb-3">
+              <button className={mode === 'alimentos' ? 'on' : ''} onClick={() => setMode('alimentos')}>Alimentos</button>
+              <button className={mode === 'recetas' ? 'on' : ''} onClick={() => setMode('recetas')}>Recetas</button>
             </div>
-            {q.trim() === '' && (
-              <div className="nt-empty">
-                <Icon name="barcode" size={26} />
-                <div className="mt-2 fw-700">Escribe para buscar</div>
-                <div style={{ fontSize: '.88rem' }}>Encuentra alimentos aprobados y agrégalos a <strong>{active}</strong>.</div>
-              </div>
-            )}
-            <div className="d-flex flex-column gap-2">
-              {results.map((p) => (
-                <div key={p.barcode} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ border: '1px solid var(--nt-line)' }}>
-                  <div className="min-w-0">
-                    <div className="fw-700 text-truncate">{p.name}</div>
-                    <div className="text-muted-soft" style={{ fontSize: '.8rem' }}>{p.portion}{p.unit} · {p.energy} kcal · {p.barcode}</div>
-                  </div>
-                  <button className="btn btn-primary btn-sm px-3" onClick={() => add(p)}><Icon name="plus" size={15} /></button>
+
+            {mode === 'alimentos' ? (
+              <>
+                <div className="input-group input-group-lg mb-3">
+                  <span className="input-group-text"><Icon name="search" size={18} /></span>
+                  <input className="form-control" placeholder="Ej. avena o 7441001000017" value={q} onChange={(e) => setQ(e.target.value)} />
+                  {searching && <span className="input-group-text"><span className="spinner-border spinner-border-sm" /></span>}
                 </div>
-              ))}
-              {q.trim().length === 1 && (
-                <div className="nt-empty">Escribe al menos 2 caracteres para buscar alimentos aprobados.</div>
-              )}
-              {q.trim().length >= 2 && !searching && results.length === 0 && (
-                <div className="nt-empty">No se encontró «{q}».<br /><span style={{ fontSize: '.85rem' }}>Puedes crearlo en <strong>Productos</strong> o como <strong>Receta</strong>.</span></div>
-              )}
-            </div>
+                {q.trim() === '' && (
+                  <div className="nt-empty">
+                    <Icon name="barcode" size={26} />
+                    <div className="mt-2 fw-700">Escribe para buscar</div>
+                    <div style={{ fontSize: '.88rem' }}>Encuentra alimentos aprobados y agrégalos a <strong>{active}</strong>.</div>
+                  </div>
+                )}
+                <div className="d-flex flex-column gap-2">
+                  {results.map((p) => (
+                    <div key={p.barcode} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ border: '1px solid var(--nt-line)' }}>
+                      <div className="min-w-0">
+                        <div className="fw-700 text-truncate">{p.name}</div>
+                        <div className="text-muted-soft" style={{ fontSize: '.8rem' }}>{p.portion}{p.unit} · {p.energy} kcal · {p.barcode}</div>
+                      </div>
+                      <button className="btn btn-primary btn-sm px-3" onClick={() => add(p)}><Icon name="plus" size={15} /></button>
+                    </div>
+                  ))}
+                  {q.trim().length === 1 && (
+                    <div className="nt-empty">Escribe al menos 2 caracteres para buscar alimentos aprobados.</div>
+                  )}
+                  {q.trim().length >= 2 && !searching && results.length === 0 && (
+                    <div className="nt-empty">No se encontró «{q}».<br /><span style={{ fontSize: '.85rem' }}>Puedes crearlo en <strong>Productos</strong> o como <strong>Receta</strong>.</span></div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {recipesLoading ? (
+                  <div className="text-center py-4"><div className="spinner-border spinner-border-sm text-teal" role="status" /></div>
+                ) : recipes.length === 0 ? (
+                  <div className="nt-empty">
+                    <Icon name="chef" size={26} />
+                    <div className="mt-2 fw-700">No tienes recetas</div>
+                    <div style={{ fontSize: '.88rem' }}>Créalas en <strong>Recetas</strong> y aquí podrás sumarlas a <strong>{active}</strong>.</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="input-group input-group-lg mb-3">
+                      <span className="input-group-text"><Icon name="search" size={18} /></span>
+                      <input className="form-control" placeholder="Buscar receta…" value={recipeQ} onChange={(e) => setRecipeQ(e.target.value)} />
+                    </div>
+                    <div className="d-flex flex-column gap-2">
+                      {filteredRecipes.map((r) => (
+                        <div key={r.recipeId} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ border: '1px solid var(--nt-line)' }}>
+                          <div className="min-w-0">
+                            <div className="fw-700 text-truncate">{r.name}</div>
+                            <div className="text-muted-soft" style={{ fontSize: '.8rem' }}>{r.totalCalories} kcal · {r.ingredientCount} ingredientes</div>
+                          </div>
+                          <button className="btn btn-primary btn-sm px-3" onClick={() => addRecipe(r)} title={`Agregar a ${active}`}><Icon name="plus" size={15} /></button>
+                        </div>
+                      ))}
+                      {filteredRecipes.length === 0 && (
+                        <div className="nt-empty">No se encontró «{recipeQ}».</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
 

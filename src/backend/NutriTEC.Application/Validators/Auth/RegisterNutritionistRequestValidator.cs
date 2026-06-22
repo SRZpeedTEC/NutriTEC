@@ -5,7 +5,7 @@ namespace NutriTEC.Application.Validators.Auth;
 
 public class RegisterNutritionistRequestValidator : AbstractValidator<RegisterNutritionistRequest>
 {
-    private static readonly string[] AllowedPaymentMethods = ["CASH", "CARD", "TRANSFER", "SINPE", "PAYPAL"];
+    private static readonly string[] AllowedBillingFrequencies = ["WEEKLY", "MONTHLY", "ANNUAL"];
 
     public RegisterNutritionistRequestValidator()
     {
@@ -51,10 +51,10 @@ public class RegisterNutritionistRequestValidator : AbstractValidator<RegisterNu
             .NotEmpty().WithMessage("El numero de tarjeta de credito es obligatorio.")
             .MaximumLength(255).WithMessage("El numero de tarjeta no puede superar los 255 caracteres.");
 
-        RuleFor(r => r.PaymentMethod)
-            .NotEmpty().WithMessage("El metodo de pago es obligatorio.")
-            .Must(method => AllowedPaymentMethods.Contains(method, StringComparer.OrdinalIgnoreCase))
-            .WithMessage("El metodo de pago debe ser: CASH, CARD, TRANSFER, SINPE o PAYPAL.");
+        RuleFor(r => r.BillingFrequency)
+            .NotEmpty().WithMessage("El tipo de cobro es obligatorio.")
+            .Must(frequency => AllowedBillingFrequencies.Contains(frequency, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("El tipo de cobro debe ser: WEEKLY, MONTHLY o ANNUAL.");
     }
 
     private static bool HasPositiveAge(DateOnly birthday)

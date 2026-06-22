@@ -36,20 +36,31 @@ function CobroOption({ value, current, onSelect, title, price, detail }) {
 }
 
 const EMPTY_FORM = {
-  idNumber: '', firstName: '', lastName: '', age: '', birthDate: '1988-02-14',
+  idNumber: '', firstName: '', lastName: '', birthDate: '',
   weight: '', bmi: '', address: '', email: '', password: '',
-  card: '', paymentMethod: 'CARD',
+  card: '', billingFrequency: 'MONTHLY',
 };
 
-const STEPS = ['Datos personales', 'Credenciales', 'Método de cobro'];
+const STEPS = ['Datos personales', 'Credenciales', 'Tipo de cobro'];
 
-const PAYMENT_LABELS = {
-  CARD: { title: 'Tarjeta de crédito', price: 'Mensual', detail: 'Débito automático mensual a tu tarjeta' },
-  SINPE: { title: 'SINPE Móvil', price: 'Mensual', detail: 'Transferencia SINPE mensual' },
-  TRANSFER: { title: 'Transferencia', price: 'Mensual', detail: 'Transferencia bancaria mensual' },
-  CASH: { title: 'Efectivo', price: 'Mensual', detail: 'Pago en efectivo mensual' },
-  PAYPAL: { title: 'PayPal', price: 'Mensual', detail: 'Débito automático mensual vía PayPal' },
-};
+// Tipos de cobro disponibles (texto informativo; el monto real lo calcula el backend).
+const BILLING_OPTIONS = [
+  { value: 'WEEKLY', title: 'Semanal', price: '$1', detail: 'Sin descuento' },
+  { value: 'MONTHLY', title: 'Mensual', price: '$4', detail: '5% de descuento' },
+  { value: 'ANNUAL', title: 'Anual', price: '$52', detail: '10% de descuento' },
+];
+
+// Calcula la edad a partir de una fecha de nacimiento ISO (vacío si no hay fecha válida).
+function calcAge(iso) {
+  if (!iso) return '';
+  const b = new Date(iso);
+  if (Number.isNaN(b.getTime())) return '';
+  const today = new Date();
+  let age = today.getFullYear() - b.getFullYear();
+  const m = today.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+  return age >= 0 ? String(age) : '';
+}
 
 export default function RegisterPage({ onDone, onGoLogin }) {
   const [step, setStep] = useState(0);
@@ -74,7 +85,7 @@ export default function RegisterPage({ onDone, onGoLogin }) {
         address: form.address,
         photo: null,
         encryptedCreditCard: form.card,
-        paymentMethod: form.paymentMethod,
+        billingFrequency: form.billingFrequency,
       };
       const session = await registerNutritionist(payload);
       onDone(session);
@@ -104,16 +115,18 @@ export default function RegisterPage({ onDone, onGoLogin }) {
           <>
             <PhotoUpload />
             <div className="row">
-              <Field label="Número de cédula" ph="1-1234-5678" icon="card" col="col-12" value={form.idNumber} onChange={(v) => set('idNumber', v)} />
+              <Field label="Número de cédula" ph="1-1234-5678" icon="card" half value={form.idNumber} onChange={(v) => set('idNumber', v)} />
+              <Field label="Código de nutricionista" ph="Se asignará automáticamente" icon="shield" half value="" disabled />
               <Field label="Nombre" ph="Carlos" half value={form.firstName} onChange={(v) => set('firstName', v)} />
               <Field label="Apellidos" ph="Méndez Quirós" half value={form.lastName} onChange={(v) => set('lastName', v)} />
-              <Field label="Peso" type="number" ph="79" suffix="kg" half value={form.weight} onChange={(v) => set('weight', v)} />
-              <Field label="IMC" type="number" ph="24.6" half value={form.bmi} onChange={(v) => set('bmi', v)} />
               <div className="mb-3 col-md-6">
                 <label className="form-label">Fecha de nacimiento</label>
                 <DatePicker value={form.birthDate} onChange={(v) => set('birthDate', v)} showToday={false} placeholder="Selecciona tu fecha" />
               </div>
-              <Field label="Dirección de oficina" ph="San Pedro, Montes de Oca, San José" col="col-md-6" value={form.address} onChange={(v) => set('address', v)} />
+              <Field label="Edad" suffix="años" half value={calcAge(form.birthDate)} disabled />
+              <Field label="Peso" type="number" ph="79" suffix="kg" half value={form.weight} onChange={(v) => set('weight', v)} />
+              <Field label="IMC" type="number" ph="24.6" half value={form.bmi} onChange={(v) => set('bmi', v)} />
+              <Field label="Dirección de oficina" ph="San Pedro, Montes de Oca, San José" col="col-12" value={form.address} onChange={(v) => set('address', v)} />
             </div>
           </>
         )}
@@ -133,12 +146,16 @@ export default function RegisterPage({ onDone, onGoLogin }) {
 
         {step === 2 && (
           <>
-            <Field label="Número de tarjeta de crédito (opcional)" ph="4821 1234 5678 4821" icon="card" col="col-12" value={form.card} onChange={(v) => set('card', v)} />
-            <label className="form-label mt-2">Método de cobro de la suscripción</label>
+            <Field label="Número de tarjeta de crédito" ph="4821 1234 5678 4821" icon="card" col="col-12" value={form.card} onChange={(v) => set('card', v)} />
+            <div className="nt-note mb-3">
+              <Icon name="card" size={15} />
+              <span>El cobro de tu suscripción se realizará a esta tarjeta.</span>
+            </div>
+            <label className="form-label mt-1">Tipo de cobro</label>
             <div className="d-flex flex-column gap-2 mb-2">
-              {Object.entries(PAYMENT_LABELS).map(([k, v]) => (
-                <CobroOption key={k} value={k} current={form.paymentMethod} onSelect={(val) => set('paymentMethod', val)}
-                  title={v.title} price={v.price} detail={v.detail} />
+              {BILLING_OPTIONS.map((o) => (
+                <CobroOption key={o.value} value={o.value} current={form.billingFrequency} onSelect={(val) => set('billingFrequency', val)}
+                  title={o.title} price={o.price} detail={o.detail} />
               ))}
             </div>
           </>
