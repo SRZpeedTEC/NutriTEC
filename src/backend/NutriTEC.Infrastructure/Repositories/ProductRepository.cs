@@ -33,6 +33,48 @@ public class ProductRepository : IProductRepository
         return _dbContext.Products.FirstOrDefaultAsync(product => product.BarCode == barCode, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Product>> GetByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken)
+    {
+        // Batch lookup lets recipe workflows validate every ingredient with one database query.
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(product => barCodes.Contains(product.BarCode))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<string, string>> GetNamesByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken)
+    {
+        // Projection to two varchar columns avoids EF type-mapping issues with the full Product entity.
+        var rows = await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => barCodes.Contains(p.BarCode))
+            .Select(p => new { p.BarCode, p.ProductName })
+            .ToListAsync(cancellationToken);
+
+        return (IReadOnlyDictionary<string, string>)rows.ToDictionary(
+            r => r.BarCode,
+            r => r.ProductName,
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    public async Task<IReadOnlyCollection<Product>> SearchActiveAsync(
+        string query,
+        CancellationToken cancellationToken)
+    {
+        // Selection searches are restricted to active products and match either user-facing identifier.
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(product => product.ProductStatus == ProductStatus.Active)
+            .Where(product => product.ProductName.Contains(query) || product.BarCode.Contains(query))
+            .OrderBy(product => product.ProductName)
+            .ThenBy(product => product.BarCode)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<Product>> GetPendingByUserIdAsync(
         int userId,
         CancellationToken cancellationToken)

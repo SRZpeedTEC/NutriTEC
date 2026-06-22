@@ -11,5 +11,9 @@ public class NutritionPlan
 
     public int NutritionistCode { get; set; }
 
+    public Nutritionist? Nutritionist { get; set; }
+
+    public ICollection<PlanMealTime> PlanMealTimes { get; set; } = new List<PlanMealTime>();
+
     public ICollection<PlanAssignment> PlanAssignments { get; set; } = new List<PlanAssignment>();
 }

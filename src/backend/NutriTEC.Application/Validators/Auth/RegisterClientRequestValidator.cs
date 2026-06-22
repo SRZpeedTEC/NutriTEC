@@ -43,7 +43,7 @@ public class RegisterClientRequestValidator : AbstractValidator<RegisterClientRe
             .WithMessage("La fecha de nacimiento no puede ser anterior al 1 de enero de 1900.")
             .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.Today))
             .WithMessage("La fecha de nacimiento no puede ser mayor que la fecha actual.")
-            .Must(CreatePositiveAge)
+            .Must(HasPositiveAge)
             .WithMessage("La fecha de nacimiento debe producir una edad positiva.");
 
         RuleFor(request => request.Country)
@@ -90,9 +90,9 @@ public class RegisterClientRequestValidator : AbstractValidator<RegisterClientRe
             .WithMessage("Las calorias maximas diarias deben ser mayores que 0.");
     }
 
-    private static bool CreatePositiveAge(DateOnly birthday)
+    private static bool HasPositiveAge(DateOnly birthday)
     {
-        // The database stores age as a positive integer, so the validator rejects dates that would violate it.
+        // Age is derived from the birth date only for validation and is never persisted as stale data.
         var today = DateOnly.FromDateTime(DateTime.Today);
         var age = today.Year - birthday.Year;
 

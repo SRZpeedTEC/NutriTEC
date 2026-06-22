@@ -1,0 +1,4 @@
+/* Entry-point de estilos del cliente: estilos compartidos (marca, marco y componentes). */
+@import '@nutritec/shared/styles/base.css';
+@import '@nutritec/shared/styles/layout.css';
+@import '@nutritec/shared/styles/components.css';

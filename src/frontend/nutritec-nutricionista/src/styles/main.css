@@ -1,0 +1,5 @@
+/* Entry-point de estilos del nutricionista: estilos compartidos (marca, marco y componentes) + los propios del rol. */
+@import '@nutritec/shared/styles/base.css';
+@import '@nutritec/shared/styles/layout.css';
+@import '@nutritec/shared/styles/components.css';
+@import './nutritionist.css';

@@ -1,0 +1,119 @@
+@baseUrl = http://localhost:5024
+@clientId = 1
+@otherClientId = 3
+@mealType = BREAKFAST
+@dailyMealTimeId = 22
+@approvedBarCode = P-0001
+@pendingBarCode = NT-DAILY-PENDING-001
+
+# Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
+# These stateful scenarios assume a freshly seeded database; the first API-created meal_time receives ID 22.
+
+### Search approved products by name
+GET {{baseUrl}}/api/daily-consume/products/search?query=Yogurt
+
+### Search approved products by barcode
+GET {{baseUrl}}/api/daily-consume/products/search?query={{approvedBarCode}}
+
+### Create a pending product used by the non-approved consumption scenario
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{pendingBarCode}}",
+  "productName": "Producto pendiente para consumo",
+  "portionUnit": "g",
+  "portionSize": 100,
+  "calories": 100,
+  "fat": 2,
+  "sodium": 20,
+  "carbohydrates": 15,
+  "protein": 5,
+  "vitamins": "C,B12",
+  "calcium": 10,
+  "iron": 1,
+  "userId": 1
+}
+
+### Try to add a product that is not approved
+POST {{baseUrl}}/api/daily-consume/products
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "{{mealType}}",
+  "productCode": "{{pendingBarCode}}",
+  "quantity": 1
+}
+
+### Add an approved product to today's daily consumption successfully
+POST {{baseUrl}}/api/daily-consume/products
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "{{mealType}}",
+  "productCode": "{{approvedBarCode}}",
+  "quantity": 1.5
+}
+
+### Try to add a product with an invalid quantity
+POST {{baseUrl}}/api/daily-consume/products
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "{{mealType}}",
+  "productCode": "P-0002",
+  "quantity": 0
+}
+
+### Add another product to the same meal type and reuse the existing daily meal-time instance
+POST {{baseUrl}}/api/daily-consume/products
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "{{mealType}}",
+  "productCode": "P-0002",
+  "quantity": 1
+}
+
+### Get today's daily consumption home summary
+GET {{baseUrl}}/api/daily-consume/today/{{clientId}}
+
+### Edit today's consumed product successfully
+PUT {{baseUrl}}/api/daily-consume/products/{{dailyMealTimeId}}/{{approvedBarCode}}
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "quantity": 2
+}
+
+### Try to edit an older consumed product from the seed data
+PUT {{baseUrl}}/api/daily-consume/products/14/{{approvedBarCode}}
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "quantity": 2
+}
+
+### Try to edit a consumed product that belongs to another client
+PUT {{baseUrl}}/api/daily-consume/products/{{dailyMealTimeId}}/{{approvedBarCode}}
+Content-Type: application/json
+
+{
+  "clientId": {{otherClientId}},
+  "quantity": 2
+}
+
+### Try to delete a consumed product that does not belong to the client
+DELETE {{baseUrl}}/api/daily-consume/products/{{dailyMealTimeId}}/{{approvedBarCode}}?clientId={{otherClientId}}
+
+### Delete today's consumed product successfully
+DELETE {{baseUrl}}/api/daily-consume/products/{{dailyMealTimeId}}/{{approvedBarCode}}?clientId={{clientId}}
+
+### Try to delete an older consumed product from the seed data
+DELETE {{baseUrl}}/api/daily-consume/products/14/{{approvedBarCode}}?clientId={{clientId}}

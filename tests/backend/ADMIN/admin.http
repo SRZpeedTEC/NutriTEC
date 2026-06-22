@@ -1,0 +1,96 @@
+@baseUrl = http://localhost:5024
+@adminId = 1
+@adminEmail = andrea.mora@nutritec.test
+@adminPassword = AdminPass123!
+@submitterUserId = 4
+@approveBarCode = NT-ADMIN-APPROVE-001
+@rejectBarCode = NT-ADMIN-REJECT-001
+@missingBarCode = NT-ADMIN-MISSING-999
+
+### Login admin successfully
+POST {{baseUrl}}/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### Login admin fails with invalid password
+POST {{baseUrl}}/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "WrongAdminPassword123!"
+}
+
+### Prepare pending product for approve
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{approveBarCode}}",
+  "productName": "Producto pendiente para aprobar",
+  "portionUnit": "g",
+  "portionSize": 100,
+  "calories": 110,
+  "fat": 2,
+  "sodium": 35,
+  "carbohydrates": 18,
+  "protein": 6,
+  "vitamins": "C,B12",
+  "calcium": 20,
+  "iron": 1,
+  "userId": {{submitterUserId}}
+}
+
+### Prepare pending product for reject
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{rejectBarCode}}",
+  "productName": "Producto pendiente para rechazar",
+  "portionUnit": "g",
+  "portionSize": 100,
+  "calories": 210,
+  "fat": 7,
+  "sodium": 80,
+  "carbohydrates": 25,
+  "protein": 8,
+  "vitamins": "A,D,E",
+  "calcium": 30,
+  "iron": 1.5,
+  "userId": {{submitterUserId}}
+}
+
+### GET all products
+GET {{baseUrl}}/api/admin/products
+
+### GET products ACTIVE
+GET {{baseUrl}}/api/admin/products?status=ACTIVE
+
+### GET products PENDING_REVIEW
+GET {{baseUrl}}/api/admin/products?status=PENDING_REVIEW
+
+### GET products REJECTED
+GET {{baseUrl}}/api/admin/products?status=REJECTED
+
+### GET product by barcode
+GET {{baseUrl}}/api/admin/products/{{approveBarCode}}
+
+### Approve product
+PUT {{baseUrl}}/api/admin/products/{{approveBarCode}}/approve?adminId={{adminId}}
+
+### Reject product
+PUT {{baseUrl}}/api/admin/products/{{rejectBarCode}}/reject?adminId={{adminId}}
+
+### Try to approve nonexistent product
+PUT {{baseUrl}}/api/admin/products/{{missingBarCode}}/approve?adminId={{adminId}}
+
+### Try to reject nonexistent product
+PUT {{baseUrl}}/api/admin/products/{{missingBarCode}}/reject?adminId={{adminId}}
+
+### Reject invalid status filter
+GET {{baseUrl}}/api/admin/products?status=INACTIVE

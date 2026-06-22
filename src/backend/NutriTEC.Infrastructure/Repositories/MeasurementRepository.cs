@@ -84,6 +84,25 @@ public class MeasurementRepository : IMeasurementRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Measure>> GetByClientIdAndRangeAsync(
+        int clientId,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken)
+    {
+        // The exclusive upper boundary makes the user-provided final calendar date inclusive.
+        var normalizedStartDate = startDate.Date;
+        var exclusiveEndDate = endDate.Date.AddDays(1);
+
+        return await _dbContext.Measures
+            .AsNoTracking()
+            .Where(measure => measure.ClientId == clientId)
+            .Where(measure => measure.MeasureDateTime >= normalizedStartDate)
+            .Where(measure => measure.MeasureDateTime < exclusiveEndDate)
+            .OrderBy(measure => measure.MeasureDateTime)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Measure measure, CancellationToken cancellationToken)
     {
         // Creation is tracked by EF until the service commits the unit of work.

@@ -5,7 +5,11 @@ public class LoginResponse
     // Login returns safe session data without exposing password hashes or internal authentication details.
     public int UserId { get; set; }
 
-    public int ClientId { get; set; }
+    public int? ClientId { get; set; }
+
+    public int? NutritionistCode { get; set; }
+
+    public int Age { get; set; }
 
     public string Email { get; set; } = string.Empty;
 

@@ -1,0 +1,180 @@
+@baseUrl = http://localhost:5024
+@clientId = 1
+@otherClientId = 2
+@recipeId = 4
+@mealType = LUNCH
+@pendingBarCode = NT-RECIPE-PENDING-001
+
+# Prerequisite: run the schema, consolidated programmability objects, and seed scripts in that order.
+# Stateful success scenarios assume a freshly seeded database, so the first API-created recipe receives ID 4.
+
+### Create a recipe successfully
+POST {{baseUrl}}/api/recipes
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "Protein Breakfast Bowl",
+  "products": [
+    {
+      "productCode": "P-0001",
+      "quantity": 1.5
+    },
+    {
+      "productCode": "P-0002",
+      "quantity": 1
+    }
+  ]
+}
+
+### Try to create a recipe with an empty name
+POST {{baseUrl}}/api/recipes
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "   ",
+  "products": [
+    {
+      "productCode": "P-0001",
+      "quantity": 1
+    }
+  ]
+}
+
+### Try to create a recipe without products
+POST {{baseUrl}}/api/recipes
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "Empty Recipe",
+  "products": []
+}
+
+### Create a pending product for approval validation
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "barCode": "{{pendingBarCode}}",
+  "productName": "Pending recipe ingredient",
+  "portionUnit": "g",
+  "portionSize": 100,
+  "calories": 100,
+  "fat": 1,
+  "sodium": 10,
+  "carbohydrates": 15,
+  "protein": 5,
+  "vitamins": "C,B12",
+  "calcium": 5,
+  "iron": 1,
+  "userId": 1
+}
+
+### Try to create a recipe with an unapproved product
+POST {{baseUrl}}/api/recipes
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "Pending Product Recipe",
+  "products": [
+    {
+      "productCode": "{{pendingBarCode}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Try to create a recipe with an invalid quantity
+POST {{baseUrl}}/api/recipes
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "Invalid Quantity Recipe",
+  "products": [
+    {
+      "productCode": "P-0001",
+      "quantity": 0
+    }
+  ]
+}
+
+### Get recipes owned by the client
+GET {{baseUrl}}/api/recipes/client/{{clientId}}
+
+### Get the created recipe detail
+GET {{baseUrl}}/api/recipes/{{recipeId}}?clientId={{clientId}}
+
+### Edit the recipe successfully
+PUT {{baseUrl}}/api/recipes/{{recipeId}}
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "recipeName": "Updated Protein Bowl",
+  "products": [
+    {
+      "productCode": "P-0001",
+      "quantity": 1
+    },
+    {
+      "productCode": "P-0003",
+      "quantity": 1
+    }
+  ]
+}
+
+### Try to edit a recipe owned by another client
+PUT {{baseUrl}}/api/recipes/{{recipeId}}
+Content-Type: application/json
+
+{
+  "clientId": {{otherClientId}},
+  "recipeName": "Unauthorized Update",
+  "products": [
+    {
+      "productCode": "P-0001",
+      "quantity": 1
+    }
+  ]
+}
+
+### Add the recipe to today's daily consumption successfully
+POST {{baseUrl}}/api/recipes/{{recipeId}}/daily-consume
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "{{mealType}}",
+  "multiplier": 1
+}
+
+### Try to add a recipe owned by another client
+POST {{baseUrl}}/api/recipes/{{recipeId}}/daily-consume
+Content-Type: application/json
+
+{
+  "clientId": {{otherClientId}},
+  "mealType": "{{mealType}}",
+  "multiplier": 1
+}
+
+### Try to add a recipe after manually marking one ingredient REJECTED in SQL Server
+# Manual setup example: UPDATE product SET product_status = 'REJECTED' WHERE bar_code = 'P-0003';
+POST {{baseUrl}}/api/recipes/{{recipeId}}/daily-consume
+Content-Type: application/json
+
+{
+  "clientId": {{clientId}},
+  "mealType": "DINNER",
+  "multiplier": 1
+}
+
+### Try to delete a recipe owned by another client
+DELETE {{baseUrl}}/api/recipes/{{recipeId}}?clientId={{otherClientId}}
+
+### Delete the recipe successfully
+DELETE {{baseUrl}}/api/recipes/{{recipeId}}?clientId={{clientId}}
