@@ -3,6 +3,25 @@
 // Tiempos de comida en orden, comunes a todas las vistas.
 export const MEAL_TIMES = ["Desayuno", "Merienda Mañana", "Almuerzo", "Merienda Tarde", "Cena"];
 
+// Mapeo de los tipos de comida del backend (enum en inglés) a los nombres mostrados en la UI.
+export const MEAL_TYPE_TO_DISPLAY = {
+  BREAKFAST: "Desayuno",
+  SNACK: "Merienda Mañana",
+  LUNCH: "Almuerzo",
+  OTHER: "Merienda Tarde",
+  DINNER: "Cena",
+};
+
+// Mapeo inverso: del nombre de la UI al enum del backend.
+export const DISPLAY_TO_MEAL_TYPE = Object.fromEntries(
+  Object.entries(MEAL_TYPE_TO_DISPLAY).map(([k, v]) => [v, k])
+);
+
+// Traduce un tipo de comida del backend al nombre de la UI (deja pasar lo desconocido).
+export function mealTypeToDisplay(mealType) {
+  return MEAL_TYPE_TO_DISPLAY[mealType] ?? mealType;
+}
+
 // Busca un producto del catálogo por su código de barras.
 export function byBarcode(catalog, code) {
   return catalog.find((p) => p.barcode === code);

@@ -5,7 +5,9 @@ import Avatar from '@nutritec/shared/components/Avatar.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import LineChart from '@nutritec/shared/components/LineChart.jsx';
 import { getPatients } from '@nutritec/shared/services/patientService.js';
-import { getPlans } from '@nutritec/shared/services/planService.js';
+import { getActivePlan } from '@nutritec/shared/services/planService.js';
+import { getToday } from '@nutritec/shared/services/dailyConsumeService.js';
+import { getHistory } from '@nutritec/shared/services/measurementService.js';
 import { getPatientThread, sendPatientMessage, markAsRead } from '@nutritec/shared/services/feedbackService.js';
 import { MEAL_TIMES, byId, sumKcal } from '@nutritec/shared/utils/nutrition.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
@@ -17,7 +19,7 @@ const METRICS = [
   { k: 'hips', l: 'Caderas', u: 'cm' }, { k: 'muscle', l: '% Músculo', u: '%' }, { k: 'fat', l: '% Grasa', u: '%' },
 ];
 
-function PatientPicker({ patients, plans, sel, onSel }) {
+function PatientPicker({ patients, sel, onSel }) {
   return (
     <div className="nt-card nt-card-pad">
       <div className="fw-700 mb-2">Mis pacientes</div>
@@ -27,7 +29,7 @@ function PatientPicker({ patients, plans, sel, onSel }) {
             <Avatar initials={p.initials} size={36} />
             <div className="flex-fill min-w-0 text-start">
               <div className="fw-700 text-truncate" style={{ fontSize: '.88rem' }}>{p.name}</div>
-              <div className="text-truncate text-muted-soft" style={{ fontSize: '.76rem' }}>{p.planId ? byId(plans, p.planId)?.name : 'Sin plan'}</div>
+              <div className="text-truncate text-muted-soft" style={{ fontSize: '.76rem' }}>{p.hasActivePlan ? 'Plan activo' : 'Sin plan'}</div>
             </div>
           </button>
         ))}
@@ -36,10 +38,8 @@ function PatientPicker({ patients, plans, sel, onSel }) {
   );
 }
 
-function PatientLog({ p, plan }) {
-  const log = p.dailyLog ?? [];
+function PatientLog({ log, goal, plan }) {
   const total = log.reduce((a, m) => a + sumKcal(m.items), 0);
-  const goal = p.calorieGoal;
   return (
     <div className="nt-card nt-card-pad">
       <div className="d-flex justify-content-between align-items-start mb-3">
@@ -88,8 +88,8 @@ function PatientLog({ p, plan }) {
   );
 }
 
-function PatientProgress({ p }) {
-  const measurements = [...(p.measurements || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+function PatientProgress({ p, measurements }) {
+  const rows = [...(measurements || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   const [metric, setMetric] = useState('weight');
   const mm = METRICS.find((x) => x.k === metric);
 
@@ -107,23 +107,23 @@ function PatientProgress({ p }) {
         <div className="d-flex justify-content-between align-items-start mb-4">
           <div>
             <h2 className="fw-800 mb-1">Reporte de Avance</h2>
-            <div className="text-muted-soft">{p.name} · {measurements.length} registros de medidas</div>
+            <div className="text-muted-soft">{p.name} · {rows.length} registros de medidas</div>
           </div>
           <div className="nt-brand-name" style={{ color: 'var(--nt-teal-700)' }}>Nutri<span>TEC</span></div>
         </div>
-        {measurements.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="nt-empty">El paciente aún no ha registrado medidas.</div>
         ) : (
           <>
             <div className="mb-4">
               <div className="fw-700 mb-2">{mm.l} ({mm.u})</div>
-              <LineChart data={measurements} keyName={metric} />
+              <LineChart data={rows} keyName={metric} />
             </div>
             <div className="table-responsive">
               <table className="table table-striped align-middle mb-0">
                 <thead><tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músculo</th><th>% Grasa</th></tr></thead>
                 <tbody>
-                  {measurements.map((m, i) => (
+                  {rows.map((m, i) => (
                     <tr key={i}>
                       <td className="fw-700">{formatDate(m.date)}</td><td>{m.weight} kg</td><td>{m.waist} cm</td>
                       <td>{m.neck} cm</td><td>{m.hips} cm</td><td>{m.muscle}%</td><td>{m.fat}%</td>
@@ -206,20 +206,22 @@ function SegToggle({ view, onView }) {
 
 export default function FollowupPage({ nutritionistId, initialPatient }) {
   const [patients, setPatients] = useState([]);
-  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [sel, setSel] = useState(initialPatient);
   const [view, setView] = useState('registro');
   const [thread, setThread] = useState([]);
+  const [today, setToday] = useState(null);
+  const [measurements, setMeasurements] = useState([]);
+  const [activePlan, setActivePlan] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getPatients(nutritionistId), getPlans(nutritionistId)])
-      .then(([pts, pls]) => {
-        setPatients(pts); setPlans(pls);
+    getPatients(nutritionistId)
+      .then((pts) => {
+        setPatients(pts);
         setSel((cur) => cur ?? pts[0]?.id);
       })
       .catch((err) => setError(err.message))
@@ -228,10 +230,18 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
 
   useEffect(() => { if (initialPatient) setSel(initialPatient); }, [initialPatient]);
 
-  // Carga el hilo de retroalimentación cuando cambia el paciente seleccionado.
+  // Carga los datos del paciente seleccionado: registro de hoy, medidas, plan activo e hilo.
   useEffect(() => {
     if (!sel) return;
-    getPatientThread(nutritionistId, sel).then(setThread).catch(() => setThread([]));
+    let alive = true;
+    setToday(null); setMeasurements([]); setActivePlan(null);
+    getToday(sel).then((d) => { if (alive) setToday(d); }).catch(() => { if (alive) setToday(null); });
+    getHistory(sel).then((m) => { if (alive) setMeasurements(m); }).catch(() => { if (alive) setMeasurements([]); });
+    getActivePlan(sel).then((pl) => { if (alive) setActivePlan(pl); }).catch(() => { if (alive) setActivePlan(null); });
+    getPatientThread(nutritionistId, sel).then((t) => { if (alive) setThread(t); }).catch(() => { if (alive) setThread([]); });
+    // Marca como leídos los mensajes del paciente al abrir el hilo (no bloquea la vista).
+    markAsRead(nutritionistId, sel, nutritionistId).catch(() => {});
+    return () => { alive = false; };
   }, [sel, nutritionistId]);
 
   async function send(text) {
@@ -255,14 +265,15 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
   if (!p) {
     return <div className="nt-content"><div className="nt-empty"><Icon name="users" size={28} /><div className="mt-2 fw-700">Aún no tienes pacientes asociados</div></div></div>;
   }
-  const plan = p.planId ? byId(plans, p.planId) : null;
+  // La meta calórica sale del consumo de hoy; si no hay, del total del plan activo.
+  const goal = today?.maxDailyCalories || activePlan?.totalGoal || 0;
 
   return (
     <div className="nt-content">
       <div className="row g-4">
         <div className="col-lg-3 d-print-none">
           <div style={{ position: 'sticky', top: 90 }}>
-            <PatientPicker patients={patients} plans={plans} sel={sel} onSel={setSel} />
+            <PatientPicker patients={patients} sel={sel} onSel={setSel} />
             <div className="nt-card nt-card-pad mt-3">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <Avatar initials={p.initials} size={42} />
@@ -286,8 +297,8 @@ export default function FollowupPage({ nutritionistId, initialPatient }) {
         </div>
         <div className="col-lg-9">
           <SegToggle view={view} onView={setView} />
-          {view === 'registro' && <PatientLog p={p} plan={plan} />}
-          {view === 'avance' && <PatientProgress p={p} />}
+          {view === 'registro' && <PatientLog log={today?.meals ?? []} goal={goal} plan={activePlan} />}
+          {view === 'avance' && <PatientProgress p={p} measurements={measurements} />}
           {view === 'feedback' && <FeedbackThread p={p} nutritionistId={nutritionistId} thread={thread} onSend={send} />}
         </div>
       </div>

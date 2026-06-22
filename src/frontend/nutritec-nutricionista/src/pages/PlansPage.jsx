@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Pill from '@nutritec/shared/components/Pill.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
-import { getPlans, getPlanDetail, createPlan, updatePlan } from '@nutritec/shared/services/planService.js';
+import { getPlans, getPlanDetail, createPlan, updatePlan, deletePlan } from '@nutritec/shared/services/planService.js';
 import { getAdminProducts } from '@nutritec/shared/services/productService.js';
 import { MEAL_TIMES, byBarcode, mealKcal, planKcal } from '@nutritec/shared/utils/nutrition.js';
 
 const MEAL_ICONS = { 'Desayuno': 'flame', 'Merienda Mañana': 'clock', 'Almuerzo': 'plate', 'Merienda Tarde': 'clock', 'Cena': 'chef' };
 const DEFAULT_MAX = { 'Desayuno': 400, 'Merienda Mañana': 200, 'Almuerzo': 550, 'Merienda Tarde': 200, 'Cena': 450 };
 
-function PlanCard({ plan, catalog, onEdit }) {
-  const total = Math.round(planKcal(plan.meals, catalog));
-  const items = plan.meals.reduce((a, m) => a + m.items.length, 0);
+function PlanCard({ plan, onEdit, onDelete }) {
+  // El resumen del backend ya trae el total de calorías y el número de tiempos de comida.
+  const total = Math.round(plan.totalCalories);
   return (
     <div className="nt-card nt-card-pad h-100 d-flex flex-column">
       <div className="d-flex justify-content-between align-items-start mb-2">
@@ -20,19 +20,15 @@ function PlanCard({ plan, catalog, onEdit }) {
         </div>
         <Pill tone="teal"><Icon name="flame" size={13} /> {total} kcal</Pill>
       </div>
-      <div className="d-flex flex-wrap gap-2 my-2">
-        {plan.meals.map((m) => (
-          <span key={m.mealTime} className="nt-chip" style={{ fontSize: '.74rem', padding: '.22rem .55rem' }}>
-            {m.mealTime} · {Math.round(mealKcal(m.items, catalog))}
-          </span>
-        ))}
-      </div>
       <div className="nt-divider" style={{ margin: '.5rem 0 .85rem' }} />
       <div className="d-flex align-items-center justify-content-between mt-auto">
         <div className="d-flex gap-3 text-muted-soft" style={{ fontSize: '.82rem' }}>
-          <span><Icon name="plate" size={14} /> {items} alimentos</span>
+          <span><Icon name="plate" size={14} /> {plan.mealTimeCount} tiempos de comida</span>
         </div>
-        <button className="btn btn-soft btn-sm px-3" onClick={() => onEdit(plan)}><Icon name="edit" size={14} /> Editar</button>
+        <div className="d-flex gap-1">
+          <button className="btn btn-soft btn-sm px-3" onClick={() => onEdit(plan)}><Icon name="edit" size={14} /> Editar</button>
+          <button className="btn btn-soft btn-sm px-2" title="Eliminar" onClick={() => onDelete(plan)}><Icon name="trash" size={14} /></button>
+        </div>
       </div>
     </div>
   );
@@ -201,6 +197,18 @@ export default function PlansPage({ nutritionistId }) {
     }
   }
 
+  // Elimina un plan tras confirmar y recarga la lista.
+  async function remove(plan) {
+    if (!window.confirm(`¿Eliminar el plan «${plan.name}»? Esta acción no se puede deshacer.`)) return;
+    try {
+      await deletePlan(plan.id, nutritionistId);
+      setPlans(await getPlans(nutritionistId));
+      flash('Plan eliminado');
+    } catch (err) {
+      flash(err.message || 'No se pudo eliminar el plan');
+    }
+  }
+
   if (loading) {
     return <div className="nt-content"><div className="text-center py-5"><div className="spinner-border text-teal" role="status" /></div></div>;
   }
@@ -223,7 +231,7 @@ export default function PlansPage({ nutritionistId }) {
           ? <div className="nt-empty"><Icon name="plate" size={26} /><div className="mt-2 fw-700">No tienes planes creados</div></div>
           : plans.map((p) => (
             <div className="col-md-6" key={p.id}>
-              <PlanCard plan={p} catalog={catalog} onEdit={openEdit} />
+              <PlanCard plan={p} onEdit={openEdit} onDelete={remove} />
             </div>
           ))}
       </div>

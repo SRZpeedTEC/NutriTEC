@@ -1,17 +1,8 @@
 import { apiFetch, jsonBody } from './api.js';
-import { MEAL_TIMES } from '../utils/nutrition.js';
-
-// Mapeo bidireccional entre los tipos de comida del backend y los nombres de la UI.
-const BACKEND_TO_DISPLAY = {
-  BREAKFAST: 'Desayuno',
-  SNACK: 'Merienda Mañana',
-  LUNCH: 'Almuerzo',
-  OTHER: 'Merienda Tarde',
-  DINNER: 'Cena',
-};
-const DISPLAY_TO_BACKEND = Object.fromEntries(
-  Object.entries(BACKEND_TO_DISPLAY).map(([k, v]) => [v, k])
-);
+import {
+  MEAL_TYPE_TO_DISPLAY as BACKEND_TO_DISPLAY,
+  DISPLAY_TO_MEAL_TYPE as DISPLAY_TO_BACKEND,
+} from '../utils/nutrition.js';
 
 function normalizePlanDetail(p) {
   return {
@@ -48,12 +39,14 @@ function toApiRequest(plan, nutritionistCode) {
 export async function getPlans(nutritionistCode) {
   const data = await apiFetch(`/nutrition-plans/nutritionist/${nutritionistCode}`);
   const list = Array.isArray(data) ? data : [];
+  // El resumen no trae el detalle por comida; sí trae el total de calorías y el número de tiempos.
   return list.map((p) => ({
     id: p.planId,
     name: p.planName,
     author: '',
     patients: 0,
-    meals: MEAL_TIMES.map((t) => ({ mealTime: t, maxKcal: 0, items: [] })),
+    meals: [],
+    totalCalories: Number(p.totalCalories) || 0,
     mealTimeCount: p.mealTimeCount ?? 0,
   }));
 }

@@ -1,6 +1,7 @@
 // Manejar la búsqueda de productos y el registro diario de consumo.
 
 import { apiFetch, jsonBody } from './api.js';
+import { mealTypeToDisplay } from '../utils/nutrition.js';
 
 // Traduce un producto de búsqueda del backend al formato corto de la app.
 function normalizeSearch(p) {
@@ -26,7 +27,7 @@ function normalizeToday(data) {
     remainingCalories: data.remainingCalories,
     meals: (data.mealTimes ?? []).map((m) => ({
       mealTimeId: m.mealTimeId,
-      mealTime: m.mealType,
+      mealTime: mealTypeToDisplay(m.mealType),
       kcal: m.totalCalories,
       items: (m.products ?? []).map((p) => ({
         barcode: p.barCode,

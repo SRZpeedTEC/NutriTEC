@@ -5,18 +5,16 @@ import Modal from '@nutritec/shared/components/Modal.jsx';
 import Avatar from '@nutritec/shared/components/Avatar.jsx';
 import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
-import { getPatients, searchClients, associateClient, assignPlan } from '@nutritec/shared/services/patientService.js';
+import { getPatients, searchClients, associateClient, assignPlan, disassociateClient } from '@nutritec/shared/services/patientService.js';
 import { getPlans } from '@nutritec/shared/services/planService.js';
-import { getAdminProducts } from '@nutritec/shared/services/productService.js';
-import { byId, planKcal } from '@nutritec/shared/utils/nutrition.js';
-import { formatDate } from '@nutritec/shared/utils/dates.js';
+import { byId } from '@nutritec/shared/utils/nutrition.js';
 
-function AssignModal({ patient, plans, catalog, onClose, onAssign }) {
+function AssignModal({ patient, plans, onClose, onAssign }) {
   const [planId, setPlanId] = useState(plans[0]?.id ?? '');
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10));
   const [end, setEnd] = useState('');
   const plan = byId(plans, Number(planId));
-  const total = plan ? Math.round(planKcal(plan.meals, catalog)) : 0;
+  const total = plan ? Math.round(plan.totalCalories) : 0;
 
   return (
     <Modal title="Asignar plan a paciente" sub={patient.name} onClose={onClose}
@@ -47,7 +45,7 @@ function AssignModal({ patient, plans, catalog, onClose, onAssign }) {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <div className="fw-700">{plan.name}</div>
-              <div className="text-muted-soft" style={{ fontSize: '.82rem' }}>{plan.meals.length} tiempos de comida</div>
+              <div className="text-muted-soft" style={{ fontSize: '.82rem' }}>{plan.mealTimeCount} tiempos de comida</div>
             </div>
             <Pill tone="teal"><Icon name="flame" size={13} /> {total} kcal/día</Pill>
           </div>
@@ -57,7 +55,7 @@ function AssignModal({ patient, plans, catalog, onClose, onAssign }) {
   );
 }
 
-function PatientCard({ p, onOpen, onAssign }) {
+function PatientCard({ p, onOpen, onAssign, onDisassociate }) {
   return (
     <div className="nt-card nt-card-pad h-100 d-flex flex-column">
       <div className="d-flex align-items-center gap-3 mb-3">
@@ -82,6 +80,7 @@ function PatientCard({ p, onOpen, onAssign }) {
       <div className="d-flex gap-2 mt-auto">
         <button className="btn btn-outline-primary btn-sm flex-fill" onClick={() => onOpen(p.id)}><Icon name="chat" size={15} /> Seguimiento</button>
         <button className="btn btn-primary btn-sm flex-fill" onClick={() => onAssign(p)}><Icon name="plate" size={15} /> {p.hasActivePlan ? 'Reasignar' : 'Asignar plan'}</button>
+        <button className="btn btn-soft btn-sm px-2" title="Desasociar paciente" onClick={() => onDisassociate(p)}><Icon name="x" size={15} /></button>
       </div>
     </div>
   );
@@ -91,7 +90,6 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
   const [patients, setPatients] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [plans, setPlans] = useState([]);
-  const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -103,8 +101,8 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
   // Carga pacientes y planes al montar.
   useEffect(() => {
     setLoading(true); setError(null);
-    Promise.all([getPatients(nutritionistId), getPlans(nutritionistId), getAdminProducts('ACTIVE')])
-      .then(([pts, pls, cat]) => { setPatients(pts); setPlans(pls); setCatalog(cat); })
+    Promise.all([getPatients(nutritionistId), getPlans(nutritionistId)])
+      .then(([pts, pls]) => { setPatients(pts); setPlans(pls); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [nutritionistId]);
@@ -136,6 +134,17 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
       flash(`${client.name} fue asociado a tu lista de pacientes`);
     } catch (err) {
       flash(err.message || 'No se pudo asociar al cliente');
+    }
+  }
+
+  async function disassociate(patient) {
+    if (!window.confirm(`¿Desasociar a ${patient.name} de tu lista de pacientes?`)) return;
+    try {
+      await disassociateClient(nutritionistId, patient.id);
+      setPatients(await getPatients(nutritionistId));
+      flash(`${patient.name} fue desasociado de tu lista`);
+    } catch (err) {
+      flash(err.message || 'No se pudo desasociar al paciente');
     }
   }
 
@@ -203,13 +212,13 @@ export default function PatientsPage({ nutritionistId, onOpenPatient }) {
         <div className="row g-3">
           {patients.map((p) => (
             <div className="col-md-6 col-xl-4" key={p.id}>
-              <PatientCard p={p} onOpen={onOpenPatient} onAssign={setAssignFor} />
+              <PatientCard p={p} onOpen={onOpenPatient} onAssign={setAssignFor} onDisassociate={disassociate} />
             </div>
           ))}
         </div>
       )}
 
-      {assignFor && <AssignModal patient={assignFor} plans={plans} catalog={catalog} onClose={() => setAssignFor(null)} onAssign={applyAssign} />}
+      {assignFor && <AssignModal patient={assignFor} plans={plans} onClose={() => setAssignFor(null)} onAssign={applyAssign} />}
       {toast && <div className="nt-toast"><Icon name="check" size={16} /> {toast}</div>}
     </div>
   );
