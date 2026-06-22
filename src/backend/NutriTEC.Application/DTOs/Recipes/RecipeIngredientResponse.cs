@@ -23,7 +23,7 @@ public class RecipeIngredientResponse
 
     public decimal Protein { get; set; }
 
-    public decimal Vitamins { get; set; }
+    public string Vitamins { get; set; } = string.Empty;
 
     public decimal Calcium { get; set; }
 

@@ -30,6 +30,32 @@ public class NutritionPlanRepository : INutritionPlanRepository
             .FirstOrDefaultAsync(p => p.PlanId == planId, cancellationToken);
     }
 
+    public async Task<(PlanAssignment? Assignment, NutritionPlan? Plan)> GetActiveByClientAsync(
+        int clientId,
+        DateOnly today,
+        CancellationToken cancellationToken)
+    {
+        var assignment = await _dbContext.PlanAssignments
+            .AsNoTracking()
+            .Where(a => a.ClientId == clientId)
+            .Where(a => a.AssignmentStatus == "ACTIVE")
+            .Where(a => a.StartDate <= today)
+            .Where(a => a.EndDate == null || a.EndDate >= today)
+            .OrderByDescending(a => a.StartDate)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null) return (null, null);
+
+        var plan = await _dbContext.NutritionPlans
+            .AsNoTracking()
+            .Include(p => p.PlanMealTimes)
+                .ThenInclude(pmt => pmt.MealTime)
+                    .ThenInclude(mt => mt.Products)
+            .FirstOrDefaultAsync(p => p.PlanId == assignment.PlanId, cancellationToken);
+
+        return (assignment, plan);
+    }
+
     public Task<IReadOnlyCollection<NutritionPlan>> GetByNutritionistCodeAsync(
         int nutritionistCode,
         CancellationToken cancellationToken)
@@ -72,6 +98,27 @@ public class NutritionPlanRepository : INutritionPlanRepository
     public async Task AddAssignmentAsync(PlanAssignment assignment, CancellationToken cancellationToken)
     {
         await _dbContext.PlanAssignments.AddAsync(assignment, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task FinishActiveAssignmentsAsync(int clientId, CancellationToken cancellationToken)
+    {
+        // El esquema solo permite un plan ACTIVE por cliente (indice unico filtrado):
+        // se cierra cualquier asignacion activa previa antes de crear la nueva.
+        var activeAssignments = await _dbContext.PlanAssignments
+            .Where(a => a.ClientId == clientId && a.AssignmentStatus == "ACTIVE")
+            .ToListAsync(cancellationToken);
+
+        if (activeAssignments.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var assignment in activeAssignments)
+        {
+            assignment.AssignmentStatus = "FINISHED";
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 

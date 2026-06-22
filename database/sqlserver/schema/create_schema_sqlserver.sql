@@ -47,6 +47,7 @@ GO
 CREATE TABLE nutritionist (
     nutritionist_code INT IDENTITY(1,1) NOT NULL,
     payment_method VARCHAR(20) NOT NULL,
+    billing_frequency VARCHAR(20) NOT NULL CONSTRAINT df_nutritionist_billing_frequency DEFAULT 'MONTHLY',
     photo VARCHAR(255) NULL,
     address VARCHAR(255) NOT NULL,
     id_number VARCHAR(40) NOT NULL,
@@ -60,6 +61,9 @@ CREATE TABLE nutritionist (
     CONSTRAINT uq_nutritionist_id_number UNIQUE (id_number),
     CONSTRAINT ck_nutritionist_payment_method CHECK (
         payment_method IN ('CASH', 'CARD', 'TRANSFER', 'SINPE', 'PAYPAL')
+    ),
+    CONSTRAINT ck_nutritionist_billing_frequency CHECK (
+        billing_frequency IN ('WEEKLY', 'MONTHLY', 'ANNUAL')
     ),
     CONSTRAINT ck_nutritionist_photo_not_blank CHECK (
         photo IS NULL OR LTRIM(RTRIM(photo)) <> ''
@@ -139,6 +143,8 @@ CREATE TABLE plan_assignment (
 GO
 
 -- A filtered unique index preserves assignment history while allowing only one active plan per client.
+-- QUOTED_IDENTIFIER ON is required by SQL Server for filtered indexes.
+SET QUOTED_IDENTIFIER ON;
 CREATE UNIQUE INDEX uq_plan_assignment_active_client
 ON plan_assignment (client_id)
 WHERE assignment_status = 'ACTIVE';
@@ -188,7 +194,7 @@ CREATE TABLE product (
     product_status VARCHAR(20) NOT NULL,
     iron NUMERIC(10, 2) NOT NULL DEFAULT 0,
     calcium NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    vitamins NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    vitamins VARCHAR(120) NOT NULL,
     portion_size NUMERIC(10, 2) NOT NULL,
     calories NUMERIC(10, 2) NOT NULL DEFAULT 0,
     protein NUMERIC(10, 2) NOT NULL DEFAULT 0,
@@ -205,7 +211,7 @@ CREATE TABLE product (
     ),
     CONSTRAINT ck_product_iron_non_negative CHECK (iron >= 0),
     CONSTRAINT ck_product_calcium_non_negative CHECK (calcium >= 0),
-    CONSTRAINT ck_product_vitamins_non_negative CHECK (vitamins >= 0),
+    CONSTRAINT ck_product_vitamins_not_blank CHECK (LTRIM(RTRIM(vitamins)) <> ''),
     CONSTRAINT ck_product_portion_size_positive CHECK (portion_size > 0),
     CONSTRAINT ck_product_calories_non_negative CHECK (calories >= 0),
     CONSTRAINT ck_product_protein_non_negative CHECK (protein >= 0),

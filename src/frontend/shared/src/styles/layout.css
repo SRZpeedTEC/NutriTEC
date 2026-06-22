@@ -1,0 +1,66 @@
+/* Marco fijo de la app: barra lateral, barra superior y área de contenido. */
+
+/* Contenedor raíz: sidebar + main en una fila */
+.nt-app { display: flex; min-height: 100vh; }
+
+/* ---- Barra lateral (sidebar) ---- */
+.nt-sidebar {
+  width: 248px; flex: 0 0 248px; background: #fff; color: var(--nt-ink);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  border-right: 1px solid var(--nt-line);
+}
+.nt-brand { display: flex; align-items: center; gap: .6rem; padding: 1.4rem 1.4rem 1rem; }
+.nt-brand-mark { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; display: block; background: #fff; }
+.nt-auth-brand .nt-brand-mark { width: 48px; height: 48px; }
+.nt-brand-name { font-weight: 800; font-size: 1.2rem; color: var(--nt-ink); line-height: 1; letter-spacing: -.02em; }
+.nt-brand-name span { color: var(--nt-teal-600); }
+.nt-brand-role { font-size: .66rem; color: var(--nt-muted); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: .25rem; }
+
+/* Menú de navegación dentro de la sidebar */
+.nt-nav { padding: .5rem .75rem; flex: 1; overflow-y: auto; }
+.nt-nav-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--nt-muted); padding: 1rem .85rem .4rem; font-weight: 700; }
+.nt-nav-item {
+  display: flex; align-items: center; gap: .7rem; padding: .65rem .85rem; border-radius: 10px;
+  color: var(--nt-muted); font-weight: 600; cursor: pointer; font-size: .92rem;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nt-nav-item:hover { background: var(--nt-teal-50); color: var(--nt-teal-800); }
+.nt-nav-item.active { background: var(--nt-teal-50); color: var(--nt-teal-800); box-shadow: inset 3px 0 0 var(--nt-teal-500); }
+.nt-nav-item .ico { width: 20px; text-align: center; display: grid; place-items: center; }
+.nt-nav-badge {
+  margin-left: auto; background: var(--nt-teal-600); color: #fff; font-size: .7rem; font-weight: 800;
+  min-width: 20px; height: 20px; padding: 0 .35rem; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Pie de la sidebar con el usuario actual */
+.nt-side-user { padding: 1rem; border-top: 1px solid var(--nt-line); display: flex; align-items: center; gap: .7rem; }
+
+/* ---- Área principal y barra superior ---- */
+.nt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.nt-topbar {
+  background: #fff; border-bottom: 1px solid var(--nt-line); padding: 1rem 1.75rem;
+  display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10;
+}
+.nt-topbar h1 { font-size: 1.3rem; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+.nt-content { padding: 1.75rem; max-width: 1240px; width: 100%; }
+
+/* Responsive: la sidebar se oculta y se abre como panel deslizable */
+@media (max-width: 991px) {
+  .nt-sidebar { position: fixed; left: 0; z-index: 1050; transform: translateX(-100%); transition: transform .25s; }
+  .nt-sidebar.open { transform: none; }
+  .nt-content { padding: 1.1rem; }
+}
+
+/* Impresión: oculta el marco y deja solo el contenido (para exportar reportes en PDF) */
+@media print {
+  @page { size: portrait; margin: 1.2cm; }
+  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-shadow: none !important; }
+  .nt-sidebar, .nt-topbar, .d-print-none { display: none !important; }
+  .nt-content { padding: 0 !important; max-width: 100% !important; }
+  body { background: #fff !important; }
+  .nt-card { border: 1px solid #ccc !important; }
+  .print-only { display: block !important; }
+  table, tr, .nt-card { break-inside: avoid; }
+}
+.print-only { display: none; }

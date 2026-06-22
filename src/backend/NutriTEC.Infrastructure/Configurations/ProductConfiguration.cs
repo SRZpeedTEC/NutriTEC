@@ -25,7 +25,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                 value => ProductStatusExtensions.FromDatabaseValue(value));
         entity.Property(product => product.Iron).HasColumnName("iron").HasColumnType("numeric(10, 2)");
         entity.Property(product => product.Calcium).HasColumnName("calcium").HasColumnType("numeric(10, 2)");
-        entity.Property(product => product.Vitamins).HasColumnName("vitamins").HasColumnType("numeric(10, 2)");
+        entity.Property(product => product.Vitamins).HasColumnName("vitamins").HasMaxLength(120).IsUnicode(false);
         entity.Property(product => product.PortionSize).HasColumnName("portion_size").HasColumnType("numeric(10, 2)");
         entity.Property(product => product.Calories).HasColumnName("calories").HasColumnType("numeric(10, 2)");
         entity.Property(product => product.Protein).HasColumnName("protein").HasColumnType("numeric(10, 2)");

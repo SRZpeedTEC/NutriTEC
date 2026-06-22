@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using NutriTEC.Application.DTOs.Auth;
+using NutriTEC.Application.DTOs.Admin;
 using NutriTEC.Application.DTOs.DailyConsume;
 using NutriTEC.Application.DTOs.Measurements;
 using NutriTEC.Application.DTOs.NutritionPlans;
@@ -17,6 +18,7 @@ using NutriTEC.Application.Interfaces.Recipes;
 using NutriTEC.Application.Mappings;
 using NutriTEC.Application.Services;
 using NutriTEC.Application.Validators.Auth;
+using NutriTEC.Application.Validators.Admin;
 using NutriTEC.Application.Validators.DailyConsume;
 using NutriTEC.Application.Validators.Measurements;
 using NutriTEC.Application.Validators.NutritionPlans;
@@ -41,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<RegisterClientRequest>, RegisterClientRequestValidator>();
         services.AddScoped<IValidator<RegisterNutritionistRequest>, RegisterNutritionistRequestValidator>();
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+        services.AddScoped<IValidator<AdminBillingReportRequest>, AdminBillingReportRequestValidator>();
         services.AddScoped<IValidator<CreateProductRequest>, CreateProductRequestValidator>();
         services.AddScoped<IValidator<UpdateProductRequest>, UpdateProductRequestValidator>();
         services.AddScoped<IValidator<DeleteProductRequest>, DeleteProductRequestValidator>();

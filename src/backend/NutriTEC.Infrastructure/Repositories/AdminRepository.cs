@@ -59,6 +59,28 @@ public class AdminRepository : IAdminRepository
         return await ReadProductsAsync(command, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<AdminBillingChargeRecord>> GetBillingChargesAsync(
+        AdminBillingReportRequest request,
+        CancellationToken cancellationToken)
+    {
+        await using var command = CreateStoredProcedureCommand("dbo.sp_get_admin_billing_report");
+        AddParameter(command, "@cycle_start_date", request.CycleStartDate.Date);
+        AddParameter(command, "@cycle_end_date", request.CycleEndDate.Date);
+        AddParameter(command, "@frequency", request.Frequency);
+        AddParameter(command, "@price_per_patient", request.PricePerPatient);
+
+        await OpenConnectionAsync(cancellationToken);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var charges = new List<AdminBillingChargeRecord>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            charges.Add(MapBillingCharge(reader));
+        }
+
+        return charges;
+    }
+
     public async Task<AdminProductResponse?> GetProductByBarCodeAsync(
         string barCode,
         CancellationToken cancellationToken)
@@ -160,13 +182,38 @@ public class AdminRepository : IAdminRepository
             Sodium = reader.GetDecimal(reader.GetOrdinal("sodium")),
             Carbohydrates = reader.GetDecimal(reader.GetOrdinal("carbohydrates")),
             Protein = reader.GetDecimal(reader.GetOrdinal("protein")),
-            Vitamins = reader.GetDecimal(reader.GetOrdinal("vitamins")),
+            Vitamins = reader.GetString(reader.GetOrdinal("vitamins")),
             Calcium = reader.GetDecimal(reader.GetOrdinal("calcium")),
             Iron = reader.GetDecimal(reader.GetOrdinal("iron")),
             ProductStatus = reader.GetString(reader.GetOrdinal("product_status")),
             CreatedByUserId = reader.GetInt32(reader.GetOrdinal("created_by_user_id")),
             CreatedByName = reader.GetString(reader.GetOrdinal("created_by_name")),
             CreatedByEmail = reader.GetString(reader.GetOrdinal("created_by_email"))
+        };
+    }
+
+    private static AdminBillingChargeRecord MapBillingCharge(DbDataReader reader)
+    {
+        return new AdminBillingChargeRecord
+        {
+            BillingFrequency = reader.GetString(reader.GetOrdinal("billing_frequency")),
+            NutritionistCode = reader.GetInt32(reader.GetOrdinal("nutritionist_code")),
+            NutritionistName = reader.GetString(reader.GetOrdinal("nutritionist_name")),
+            NutritionistEmail = reader.GetString(reader.GetOrdinal("nutritionist_email")),
+            PaymentMethod = reader.GetString(reader.GetOrdinal("payment_method")),
+            CreditCardNumber = reader.IsDBNull(reader.GetOrdinal("credit_card_number"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("credit_card_number")),
+            PricePerPatient = reader.GetDecimal(reader.GetOrdinal("price_per_patient")),
+            DiscountRate = reader.GetDecimal(reader.GetOrdinal("discount_rate")),
+            ClientId = reader.GetInt32(reader.GetOrdinal("client_id")),
+            ClientName = reader.GetString(reader.GetOrdinal("client_name")),
+            ActiveFrom = reader.GetDateTime(reader.GetOrdinal("active_from")),
+            ActiveTo = reader.GetDateTime(reader.GetOrdinal("active_to")),
+            ActiveDays = reader.GetInt32(reader.GetOrdinal("active_days")),
+            ProrationFactor = reader.GetDecimal(reader.GetOrdinal("proration_factor")),
+            AmountBeforeDiscount = reader.GetDecimal(reader.GetOrdinal("amount_before_discount")),
+            Amount = reader.GetDecimal(reader.GetOrdinal("amount_before_discount"))
         };
     }
 }

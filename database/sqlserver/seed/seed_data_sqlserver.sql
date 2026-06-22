@@ -37,7 +37,18 @@ VALUES
     (3, '1991-11-08', 'Mariana', 'Solis', 'hash_nutri_002', 'mariana.solis@nutritec.test'),
     (4, '1997-02-05', 'Daniel', 'Rojas', 'hash_client_001', 'daniel.rojas@nutritec.test'),
     (5, '1994-09-17', 'Sofia', 'Castro', 'hash_client_002', 'sofia.castro@nutritec.test'),
-    (6, '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 'luis.herrera@nutritec.test');
+    (6, '1988-12-01', 'Luis', 'Herrera', 'hash_client_003', 'luis.herrera@nutritec.test'),
+    (7, '1990-06-21', 'Valeria', 'Campos', 'hash_client_004', 'valeria.campos@nutritec.test'),
+    (8, '1986-04-12', 'Esteban', 'Camacho', 'hash_nutri_003', 'esteban.camacho@nutritec.test'),
+    (9, '1987-10-30', 'Paula', 'Jimenez', 'hash_nutri_004', 'paula.jimenez@nutritec.test'),
+    (10, '1984-01-19', 'Gabriel', 'Nunez', 'hash_nutri_005', 'gabriel.nunez@nutritec.test'),
+    (11, '1983-05-27', 'Sofia', 'Ramirez', 'hash_nutri_006', 'sofia.ramirez@nutritec.test'),
+    (12, '1995-03-03', 'Mateo', 'Alfaro', 'hash_client_005', 'mateo.alfaro@nutritec.test'),
+    (13, '1993-08-14', 'Camila', 'Vega', 'hash_client_006', 'camila.vega@nutritec.test'),
+    (14, '1992-12-09', 'Jorge', 'Araya', 'hash_client_007', 'jorge.araya@nutritec.test'),
+    (15, '1996-07-01', 'Natalia', 'Mendez', 'hash_client_008', 'natalia.mendez@nutritec.test'),
+    (16, '1991-09-25', 'Diego', 'Salas', 'hash_client_009', 'diego.salas@nutritec.test'),
+    (17, '1998-11-11', 'Lucia', 'Brenes', 'hash_client_010', 'lucia.brenes@nutritec.test');
 
 SET IDENTITY_INSERT app_user OFF;
 GO
@@ -60,6 +71,7 @@ SET IDENTITY_INSERT nutritionist ON;
 INSERT INTO nutritionist (
     nutritionist_code,
     payment_method,
+    billing_frequency,
     photo,
     address,
     id_number,
@@ -69,8 +81,12 @@ INSERT INTO nutritionist (
     user_id
 )
 VALUES
-    (1, 'CARD', 'photos/carlos-vargas.jpg', 'San Pedro, San Jose', 'CR-108540221', 'enc_card_carlos_001', 76.50, 24.20, 2),
-    (2, 'SINPE', 'photos/mariana-solis.jpg', 'Cartago Centro, Cartago', 'CR-207760554', 'enc_card_mariana_002', 62.10, 22.40, 3);
+    (1, 'CARD', 'MONTHLY', 'photos/carlos-vargas.jpg', 'San Pedro, San Jose', 'CR-108540221', 'enc_card_carlos_001', 76.50, 24.20, 2),
+    (2, 'SINPE', 'ANNUAL', 'photos/mariana-solis.jpg', 'Cartago Centro, Cartago', 'CR-207760554', 'enc_card_mariana_002', 62.10, 22.40, 3),
+    (3, 'CARD', 'WEEKLY', 'photos/esteban-camacho.jpg', 'Escazu, San Jose', 'CR-303330333', 'enc_card_esteban_003', 81.20, 25.10, 8),
+    (4, 'TRANSFER', 'WEEKLY', 'photos/paula-jimenez.jpg', 'Heredia Centro, Heredia', 'CR-404440444', 'enc_card_paula_004', 59.80, 21.70, 9),
+    (5, 'PAYPAL', 'MONTHLY', 'photos/gabriel-nunez.jpg', 'Alajuela Centro, Alajuela', 'CR-505550555', 'enc_card_gabriel_005', 73.40, 23.90, 10),
+    (6, 'CARD', 'ANNUAL', 'photos/sofia-ramirez.jpg', 'Curridabat, San Jose', 'CR-606660666', 'enc_card_sofia_006', 65.30, 22.80, 11);
 
 SET IDENTITY_INSERT nutritionist OFF;
 GO
@@ -81,7 +97,14 @@ INSERT INTO client (client_id, max_daily_calories, country, user_id)
 VALUES
     (1, 2200.00, 'Costa Rica', 4),
     (2, 1850.00, 'Costa Rica', 5),
-    (3, 2400.00, 'Panama', 6);
+    (3, 2400.00, 'Panama', 6),
+    (4, 2000.00, 'Costa Rica', 7),
+    (5, 2100.00, 'Costa Rica', 12),
+    (6, 1950.00, 'Costa Rica', 13),
+    (7, 2050.00, 'Costa Rica', 14),
+    (8, 2150.00, 'Costa Rica', 15),
+    (9, 2250.00, 'Costa Rica', 16),
+    (10, 1900.00, 'Costa Rica', 17);
 
 SET IDENTITY_INSERT client OFF;
 GO
@@ -107,12 +130,12 @@ INSERT INTO product (
     user_id
 )
 VALUES
-    ('P-0001', 'g', 2.00, 'ACTIVE', 1.20, 15.00, 4.00, 100.00, 120.00, 4.00, 21.00, 2.00, 'Greek Yogurt', 2),
-    ('P-0002', 'g', 1.00, 'ACTIVE', 0.80, 8.00, 6.00, 100.00, 95.00, 2.50, 20.00, 0.50, 'Fresh Berries', 2),
-    ('P-0003', 'g', 60.00, 'ACTIVE', 1.50, 12.00, 2.00, 100.00, 165.00, 31.00, 0.00, 3.60, 'Grilled Chicken Breast', 3),
-    ('P-0004', 'g', 5.00, 'ACTIVE', 2.80, 20.00, 3.00, 100.00, 120.00, 4.40, 21.30, 1.90, 'Brown Rice', 3),
-    ('P-0005', 'g', 7.00, 'ACTIVE', 1.00, 9.00, 5.00, 100.00, 160.00, 2.00, 8.50, 14.70, 'Avocado', 6),
-    ('P-0006', 'g', 70.00, 'ACTIVE', 2.10, 18.00, 2.50, 100.00, 208.00, 20.00, 0.00, 13.00, 'Salmon Fillet', 6);
+    ('P-0001', 'g', 2.00, 'ACTIVE', 1.20, 15.00, 'A,D', 100.00, 120.00, 4.00, 21.00, 2.00, 'Greek Yogurt', 2),
+    ('P-0002', 'g', 1.00, 'ACTIVE', 0.80, 8.00, 'C,B12', 100.00, 95.00, 2.50, 20.00, 0.50, 'Fresh Berries', 2),
+    ('P-0003', 'g', 60.00, 'ACTIVE', 1.50, 12.00, 'B1,B6,B12', 100.00, 165.00, 31.00, 0.00, 3.60, 'Grilled Chicken Breast', 3),
+    ('P-0004', 'g', 5.00, 'ACTIVE', 2.80, 20.00, 'B1', 100.00, 120.00, 4.40, 21.30, 1.90, 'Brown Rice', 3),
+    ('P-0005', 'g', 7.00, 'ACTIVE', 1.00, 9.00, 'A,E', 100.00, 160.00, 2.00, 8.50, 14.70, 'Avocado', 6),
+    ('P-0006', 'g', 70.00, 'ACTIVE', 2.10, 18.00, 'D,B12', 100.00, 208.00, 20.00, 0.00, 13.00, 'Salmon Fillet', 6);
 GO
 
 SET IDENTITY_INSERT meal_time ON;
@@ -180,12 +203,20 @@ INSERT INTO nutritionist_client (
     client_id
 )
 VALUES
-    ('2026-01-10', NULL, 'ACTIVE', 1, 1),
-    ('2026-02-01', NULL, 'ACTIVE', 1, 2),
+    ('2025-01-01', NULL, 'ACTIVE', 1, 1),
+    ('2026-04-16', NULL, 'ACTIVE', 1, 2),
+    ('2025-01-01', '2025-12-31', 'FINISHED', 1, 4),
     ('2025-10-15', '2026-03-31', 'FINISHED', 2, 2),
-    ('2026-03-05', NULL, 'ACTIVE', 2, 3);
+    ('2026-03-05', NULL, 'ACTIVE', 2, 3),
+    ('2025-01-01', NULL, 'ACTIVE', 2, 5),
+    ('2026-04-06', NULL, 'ACTIVE', 3, 6),
+    ('2026-04-10', NULL, 'ACTIVE', 3, 7),
+    ('2026-04-01', '2026-04-05', 'FINISHED', 4, 8),
+    ('2026-04-01', NULL, 'ACTIVE', 5, 9),
+    ('2025-01-01', NULL, 'ACTIVE', 6, 10);
 GO
 
+SET QUOTED_IDENTIFIER ON;
 SET IDENTITY_INSERT plan_assignment ON;
 
 INSERT INTO plan_assignment (

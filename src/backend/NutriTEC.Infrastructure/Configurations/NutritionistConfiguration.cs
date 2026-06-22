@@ -13,6 +13,7 @@ public class NutritionistConfiguration : IEntityTypeConfiguration<Nutritionist>
 
         entity.Property(n => n.NutritionistCode).HasColumnName("nutritionist_code");
         entity.Property(n => n.PaymentMethod).HasColumnName("payment_method").HasMaxLength(20).IsUnicode(false);
+        entity.Property(n => n.BillingFrequency).HasColumnName("billing_frequency").HasMaxLength(20).IsUnicode(false);
         entity.Property(n => n.Photo).HasColumnName("photo").HasMaxLength(255).IsUnicode(false).IsRequired(false);
         entity.Property(n => n.Address).HasColumnName("address").HasMaxLength(255).IsUnicode(false);
         entity.Property(n => n.IdNumber).HasColumnName("id_number").HasMaxLength(40).IsUnicode(false);

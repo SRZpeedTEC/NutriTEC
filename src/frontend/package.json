@@ -1,0 +1,11 @@
+{
+  "name": "nutritec-frontend",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "nutritec-admin",
+    "nutritec-cliente",
+    "nutritec-nutricionista"
+  ]
+}

@@ -15,6 +15,10 @@ public interface IAdminRepository
         string? productStatus,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<AdminBillingChargeRecord>> GetBillingChargesAsync(
+        AdminBillingReportRequest request,
+        CancellationToken cancellationToken);
+
     Task<AdminProductResponse?> GetProductByBarCodeAsync(
         string barCode,
         CancellationToken cancellationToken);

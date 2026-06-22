@@ -165,7 +165,7 @@ public class RecipeService : IRecipeService
 
         return await _dailyConsumeService.AddProductBatchAsync(
             request.ClientId,
-            request.MealTimeId,
+            request.MealType,
             dailyProducts,
             cancellationToken);
     }
@@ -243,7 +243,7 @@ public class RecipeService : IRecipeService
                 Sodium = details.Sum(detail => detail.CalculatedSodium),
                 Carbohydrates = details.Sum(detail => detail.CalculatedCarbohydrates),
                 Protein = details.Sum(detail => detail.CalculatedProtein),
-                Vitamins = details.Sum(detail => detail.CalculatedVitamins),
+                Vitamins = CombineVitaminLists(details.Select(detail => detail.CalculatedVitamins)),
                 Calcium = details.Sum(detail => detail.CalculatedCalcium),
                 Iron = details.Sum(detail => detail.CalculatedIron)
             },
@@ -277,6 +277,18 @@ public class RecipeService : IRecipeService
             ProductCode = ingredient.ProductCode,
             Quantity = ingredient.Quantity
         }).ToList();
+    }
+
+    private static string CombineVitaminLists(IEnumerable<string> vitaminLists)
+    {
+        return string.Join(
+            ",",
+            vitaminLists
+                .SelectMany(vitamins => vitamins.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                .Select(vitamin => vitamin.Trim())
+                .Where(vitamin => vitamin.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(vitamin => vitamin));
     }
 
     private static void EnsureTotalFitsSchema(

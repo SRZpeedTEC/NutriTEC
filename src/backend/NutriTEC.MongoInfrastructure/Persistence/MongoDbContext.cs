@@ -10,10 +10,12 @@ public class MongoDbContext
 
     public MongoDbContext(MongoDbSettings settings)
     {
-        var client = new MongoClient(settings.ConnectionString);
+        var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
+        clientSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(3);
+        var client = new MongoClient(clientSettings);
         _database = client.GetDatabase(settings.DatabaseName);
 
-        EnsureIndexes();
+        try { EnsureIndexes(); } catch { /* MongoDB unavailable; indexes created on first connection */ }
     }
 
     public IMongoCollection<Message> Messages => _database.GetCollection<Message>("messages");

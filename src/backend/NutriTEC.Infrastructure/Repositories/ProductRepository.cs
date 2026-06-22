@@ -44,6 +44,23 @@ public class ProductRepository : IProductRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<string, string>> GetNamesByBarCodesAsync(
+        IReadOnlyCollection<string> barCodes,
+        CancellationToken cancellationToken)
+    {
+        // Projection to two varchar columns avoids EF type-mapping issues with the full Product entity.
+        var rows = await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => barCodes.Contains(p.BarCode))
+            .Select(p => new { p.BarCode, p.ProductName })
+            .ToListAsync(cancellationToken);
+
+        return (IReadOnlyDictionary<string, string>)rows.ToDictionary(
+            r => r.BarCode,
+            r => r.ProductName,
+            StringComparer.OrdinalIgnoreCase);
+    }
+
     public async Task<IReadOnlyCollection<Product>> SearchActiveAsync(
         string query,
         CancellationToken cancellationToken)

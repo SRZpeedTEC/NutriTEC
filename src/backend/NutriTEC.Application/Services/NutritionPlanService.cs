@@ -168,6 +168,10 @@ public class NutritionPlanService : INutritionPlanService
             throw new ConflictException("El cliente no esta asociado como paciente activo de este nutricionista.");
         }
 
+        // Reasignar reemplaza el plan vigente: se cierra el activo anterior para respetar
+        // el indice unico (un plan ACTIVE por cliente) antes de insertar el nuevo.
+        await _planRepository.FinishActiveAssignmentsAsync(request.ClientId, cancellationToken);
+
         var assignment = new PlanAssignment
         {
             PlanId = planId,
@@ -219,6 +223,49 @@ public class NutritionPlanService : INutritionPlanService
             EndDate = assignment.EndDate,
             AssignmentStatus = assignment.AssignmentStatus,
             Message = "Asignacion de plan cancelada correctamente."
+        };
+    }
+
+    public async Task<ClientActivePlanDetailResponse?> GetActiveByClientAsync(
+        int clientId,
+        CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var (assignment, plan) = await _planRepository.GetActiveByClientAsync(clientId, today, cancellationToken);
+
+        if (assignment is null || plan is null) return null;
+
+        // Fetch product names in a separate query to avoid EF Core type-mapping issues
+        // when joining meal_time_product (decimal columns) with product (enum+HasConversion).
+        var allBarCodes = plan.PlanMealTimes
+            .SelectMany(pmt => pmt.MealTime.Products.Select(p => p.ProductCode))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var productNameMap = await _productRepository.GetNamesByBarCodesAsync(allBarCodes, cancellationToken);
+
+        return new ClientActivePlanDetailResponse
+        {
+            AssignmentId = assignment.AssignmentId,
+            PlanId = plan.PlanId,
+            PlanName = plan.PlanName,
+            TotalCalories = plan.TotalCalories,
+            NutritionistCode = plan.NutritionistCode,
+            StartDate = assignment.StartDate,
+            EndDate = assignment.EndDate,
+            MealTimes = plan.PlanMealTimes.Select(pmt => new NutritionPlanMealTimeResponse
+            {
+                MealTimeId = pmt.MealTimeId,
+                MealType = pmt.MealTime.MealType,
+                TotalCalories = pmt.MealTime.Products.Sum(p => p.Calories * p.Quantity),
+                Products = pmt.MealTime.Products.Select(p => new NutritionPlanMealTimeProductResponse
+                {
+                    ProductCode = p.ProductCode,
+                    ProductName = productNameMap.TryGetValue(p.ProductCode, out var name) ? name : string.Empty,
+                    Quantity = p.Quantity,
+                    Calories = p.Calories
+                }).ToList()
+            }).ToList()
         };
     }
 

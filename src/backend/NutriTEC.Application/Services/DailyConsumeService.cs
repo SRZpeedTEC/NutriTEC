@@ -54,7 +54,7 @@ public class DailyConsumeService : IDailyConsumeService
         // Single-product additions share the same atomic workflow used by recipe expansion.
         return await AddProductsCoreAsync(
             request.ClientId,
-            request.MealTimeId,
+            request.MealType,
             new[]
             {
                 new DailyProductBatchItem
@@ -69,14 +69,14 @@ public class DailyConsumeService : IDailyConsumeService
 
     public Task<DailyConsumeMutationResponse> AddProductBatchAsync(
         int clientId,
-        int mealTimeId,
+        string mealType,
         IReadOnlyCollection<DailyProductBatchItem> products,
         CancellationToken cancellationToken)
     {
         // Recipe expansion enters daily consumption through one all-or-nothing batch operation.
         return AddProductsCoreAsync(
             clientId,
-            mealTimeId,
+            mealType,
             products,
             "Receta agregada al consumo diario.",
             cancellationToken);
@@ -155,13 +155,16 @@ public class DailyConsumeService : IDailyConsumeService
 
     private async Task<DailyConsumeMutationResponse> AddProductsCoreAsync(
         int clientId,
-        int mealTimeId,
+        string mealType,
         IReadOnlyCollection<DailyProductBatchItem> requestedProducts,
         string successMessage,
         CancellationToken cancellationToken)
     {
         // Shared validation prevents partial recipe expansion and keeps direct additions behaviorally identical.
         await EnsureClientExistsAsync(clientId, cancellationToken);
+
+        // El tipo llega validado; se normaliza a mayusculas para casar con el CHECK de la base de datos.
+        mealType = mealType.Trim().ToUpperInvariant();
 
         if (requestedProducts.Count == 0)
         {
@@ -184,9 +187,6 @@ public class DailyConsumeService : IDailyConsumeService
             throw new ConflictException("No se pueden agregar productos duplicados en una misma operacion.");
         }
 
-        var templateMealTime = await _dailyConsumeRepository.GetMealTimeByIdAsync(
-            mealTimeId,
-            cancellationToken) ?? throw new NotFoundException("No se encontro el horario de comida solicitado.");
         var productCodes = normalizedProducts.Select(item => item.ProductCode).ToList();
         var products = await _productRepository.GetByBarCodesAsync(productCodes, cancellationToken);
 
@@ -206,7 +206,7 @@ public class DailyConsumeService : IDailyConsumeService
         var dailyMealTime = await _dailyConsumeRepository.GetDailyMealTimeByTypeAsync(
             clientId,
             today,
-            templateMealTime.MealType,
+            mealType,
             cancellationToken);
 
         if (dailyMealTime is not null)
@@ -245,7 +245,7 @@ public class DailyConsumeService : IDailyConsumeService
 
         if (dailyMealTime is null)
         {
-            var scopedMealTime = new MealTime { MealType = templateMealTime.MealType };
+            var scopedMealTime = new MealTime { MealType = mealType };
             dailyMealTime = new DailyMealTime
             {
                 ClientId = clientId,

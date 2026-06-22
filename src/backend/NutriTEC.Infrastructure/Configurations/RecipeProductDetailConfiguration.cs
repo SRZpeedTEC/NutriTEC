@@ -26,7 +26,7 @@ public class RecipeProductDetailConfiguration : IEntityTypeConfiguration<RecipeP
         entity.Property(detail => detail.CalculatedSodium).HasColumnName("calculated_sodium").HasColumnType("numeric(20, 2)");
         entity.Property(detail => detail.CalculatedCarbohydrates).HasColumnName("calculated_carbohydrates").HasColumnType("numeric(20, 2)");
         entity.Property(detail => detail.CalculatedProtein).HasColumnName("calculated_protein").HasColumnType("numeric(20, 2)");
-        entity.Property(detail => detail.CalculatedVitamins).HasColumnName("calculated_vitamins").HasColumnType("numeric(20, 2)");
+        entity.Property(detail => detail.CalculatedVitamins).HasColumnName("calculated_vitamins").HasMaxLength(120).IsUnicode(false);
         entity.Property(detail => detail.CalculatedCalcium).HasColumnName("calculated_calcium").HasColumnType("numeric(20, 2)");
         entity.Property(detail => detail.CalculatedIron).HasColumnName("calculated_iron").HasColumnType("numeric(20, 2)");
     }

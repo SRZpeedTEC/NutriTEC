@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:5024
 @clientId = 1
 @otherClientId = 3
-@mealTimeTemplateId = 1
+@mealType = BREAKFAST
 @dailyMealTimeId = 22
 @approvedBarCode = P-0001
 @pendingBarCode = NT-DAILY-PENDING-001
@@ -29,7 +29,7 @@ Content-Type: application/json
   "sodium": 20,
   "carbohydrates": 15,
   "protein": 5,
-  "vitamins": 1,
+  "vitamins": "C,B12",
   "calcium": 10,
   "iron": 1,
   "userId": 1
@@ -41,7 +41,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "productCode": "{{pendingBarCode}}",
   "quantity": 1
 }
@@ -52,7 +52,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "productCode": "{{approvedBarCode}}",
   "quantity": 1.5
 }
@@ -63,7 +63,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "productCode": "P-0002",
   "quantity": 0
 }
@@ -74,7 +74,7 @@ Content-Type: application/json
 
 {
   "clientId": {{clientId}},
-  "mealTimeId": {{mealTimeTemplateId}},
+  "mealType": "{{mealType}}",
   "productCode": "P-0002",
   "quantity": 1
 }

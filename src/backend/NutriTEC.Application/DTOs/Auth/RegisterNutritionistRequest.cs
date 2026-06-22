@@ -24,5 +24,5 @@ public class RegisterNutritionistRequest
 
     public string EncryptedCreditCard { get; set; } = string.Empty;
 
-    public string PaymentMethod { get; set; } = string.Empty;
+    public string BillingFrequency { get; set; } = string.Empty;
 }

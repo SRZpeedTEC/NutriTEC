@@ -17,4 +17,6 @@ public interface INutritionPlanService
     Task<PlanAssignmentMutationResponse> AssignToClientAsync(int planId, AssignPlanRequest request, CancellationToken cancellationToken);
 
     Task<PlanAssignmentMutationResponse> CancelAssignmentAsync(int assignmentId, int nutritionistCode, CancellationToken cancellationToken);
+
+    Task<ClientActivePlanDetailResponse?> GetActiveByClientAsync(int clientId, CancellationToken cancellationToken);
 }

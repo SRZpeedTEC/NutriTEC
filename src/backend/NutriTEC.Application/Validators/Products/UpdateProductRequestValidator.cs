@@ -50,8 +50,14 @@ public class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequ
             .WithMessage("La proteina no puede ser negativa.");
 
         RuleFor(request => request.Vitamins)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Las vitaminas no pueden ser negativas.");
+            .NotEmpty()
+            .WithMessage("Las vitaminas son obligatorias.")
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Las vitaminas son obligatorias.")
+            .MaximumLength(120)
+            .WithMessage("Las vitaminas no pueden superar los 120 caracteres.")
+            .Must(HaveValidVitaminList)
+            .WithMessage("Las vitaminas deben indicarse como nombres alfanumericos separados por coma.");
 
         RuleFor(request => request.Calcium)
             .GreaterThanOrEqualTo(0)
@@ -64,5 +70,18 @@ public class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequ
         RuleFor(request => request.UserId)
             .GreaterThan(0)
             .WithMessage("El identificador del usuario debe ser mayor que 0.");
+    }
+
+    private static bool HaveValidVitaminList(string vitamins)
+    {
+        if (string.IsNullOrWhiteSpace(vitamins))
+        {
+            return false;
+        }
+
+        return vitamins
+            .Split(',')
+            .Select(vitamin => vitamin.Trim())
+            .All(vitamin => vitamin.Length > 0 && vitamin.All(char.IsLetterOrDigit));
     }
 }

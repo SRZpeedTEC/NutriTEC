@@ -132,6 +132,7 @@ public class ProductService : IProductService
         request.BarCode = request.BarCode.Trim();
         request.ProductName = request.ProductName.Trim();
         request.PortionUnit = request.PortionUnit.Trim();
+        request.Vitamins = NormalizeVitaminList(request.Vitamins);
     }
 
     private static void NormalizeUpdateRequest(UpdateProductRequest request)
@@ -139,6 +140,12 @@ public class ProductService : IProductService
         // Update normalization keeps persisted product text consistent with creation.
         request.ProductName = request.ProductName.Trim();
         request.PortionUnit = request.PortionUnit.Trim();
+        request.Vitamins = NormalizeVitaminList(request.Vitamins);
+    }
+
+    private static string NormalizeVitaminList(string vitamins)
+    {
+        return string.Join(",", vitamins.Split(',').Select(vitamin => vitamin.Trim()));
     }
 
     private ProductMutationResponse CreateMutationResponse(string message, Product product)

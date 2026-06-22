@@ -57,6 +57,96 @@ public class AdminService : IAdminService
         return await _adminRepository.GetProductsAsync(normalizedStatus, cancellationToken);
     }
 
+    public async Task<AdminBillingReportResponse> GetBillingReportAsync(
+        AdminBillingReportRequest request,
+        CancellationToken cancellationToken)
+    {
+        NormalizeBillingReportRequest(request);
+        var charges = await _adminRepository.GetBillingChargesAsync(request, cancellationToken);
+        var nutritionists = charges
+            .GroupBy(charge => new
+            {
+                charge.BillingFrequency,
+                charge.NutritionistCode,
+                charge.NutritionistName,
+                charge.NutritionistEmail,
+                charge.PaymentMethod,
+                charge.CreditCardNumber,
+                charge.PricePerPatient,
+                charge.DiscountRate
+            })
+            .Select(group =>
+            {
+                var patients = group
+                    .OrderBy(charge => charge.ClientName)
+                    .ThenBy(charge => charge.ClientId)
+                    .Select(charge => new AdminBillingPatientChargeResponse
+                    {
+                        ClientId = charge.ClientId,
+                        ClientName = charge.ClientName,
+                        ActiveFrom = charge.ActiveFrom,
+                        ActiveTo = charge.ActiveTo,
+                        ActiveDays = charge.ActiveDays,
+                        ProrationFactor = charge.ProrationFactor,
+                        AmountBeforeDiscount = charge.AmountBeforeDiscount,
+                        Amount = charge.AmountBeforeDiscount
+                    })
+                    .ToList();
+
+                var totalBeforeDiscount = RoundMoney(patients.Sum(patient => patient.AmountBeforeDiscount));
+                var discountApplied = RoundMoney(totalBeforeDiscount * group.Key.DiscountRate);
+                var finalAmount = totalBeforeDiscount - discountApplied;
+
+                return new AdminBillingNutritionistChargeResponse
+                {
+                    BillingFrequency = group.Key.BillingFrequency,
+                    NutritionistCode = group.Key.NutritionistCode,
+                    NutritionistName = group.Key.NutritionistName,
+                    NutritionistEmail = group.Key.NutritionistEmail,
+                    PaymentMethod = group.Key.PaymentMethod,
+                    CreditCardNumber = group.Key.CreditCardNumber,
+                    PricePerPatient = group.Key.PricePerPatient,
+                    DiscountRate = group.Key.DiscountRate,
+                    PatientCount = patients.Count,
+                    TotalAmountBeforeDiscount = totalBeforeDiscount,
+                    DiscountApplied = discountApplied,
+                    FinalAmount = finalAmount,
+                    TotalAmount = finalAmount,
+                    Patients = patients
+                };
+            })
+            .OrderBy(nutritionist => nutritionist.BillingFrequency)
+            .ThenBy(nutritionist => nutritionist.NutritionistName)
+            .ThenBy(nutritionist => nutritionist.NutritionistCode)
+            .ToList();
+
+        var cycleDays = (request.CycleEndDate.Date - request.CycleStartDate.Date).Days + 1;
+        var totalAmountBeforeDiscount = nutritionists.Sum(nutritionist => nutritionist.TotalAmountBeforeDiscount);
+        var totalDiscountApplied = nutritionists.Sum(nutritionist => nutritionist.DiscountApplied);
+        var finalAmount = nutritionists.Sum(nutritionist => nutritionist.FinalAmount);
+
+        return new AdminBillingReportResponse
+        {
+            Frequency = request.Frequency,
+            CycleStartDate = request.CycleStartDate.Date,
+            CycleEndDate = request.CycleEndDate.Date,
+            CycleDays = cycleDays,
+            PricePerPatient = request.PricePerPatient,
+            NutritionistCount = nutritionists.Count,
+            PatientChargeCount = nutritionists.Sum(nutritionist => nutritionist.PatientCount),
+            TotalAmountBeforeDiscount = totalAmountBeforeDiscount,
+            TotalDiscountApplied = totalDiscountApplied,
+            FinalAmount = finalAmount,
+            TotalAmount = finalAmount,
+            NutritionistsByBillingFrequency = nutritionists
+                .GroupBy(nutritionist => nutritionist.BillingFrequency)
+                .ToDictionary(
+                    group => group.Key,
+                    group => (IReadOnlyCollection<AdminBillingNutritionistChargeResponse>)group.ToList()),
+            Nutritionists = nutritionists
+        };
+    }
+
     public async Task<AdminProductResponse> GetProductByBarCodeAsync(
         string barCode,
         CancellationToken cancellationToken)
@@ -169,6 +259,24 @@ public class AdminService : IAdminService
         }
 
         return barCode.Trim();
+    }
+
+    private static void NormalizeBillingReportRequest(AdminBillingReportRequest request)
+    {
+        request.Frequency = string.IsNullOrWhiteSpace(request.Frequency)
+            ? null
+            : request.Frequency.Trim().ToUpperInvariant();
+        request.CycleStartDate = request.CycleStartDate.Date;
+        request.CycleEndDate = request.CycleEndDate.Date;
+        if (request.PricePerPatient.HasValue)
+        {
+            request.PricePerPatient = RoundMoney(request.PricePerPatient.Value);
+        }
+    }
+
+    private static decimal RoundMoney(decimal amount)
+    {
+        return Math.Round(amount, 2, MidpointRounding.AwayFromZero);
     }
 
     private static int CalculateAge(DateOnly birthday)

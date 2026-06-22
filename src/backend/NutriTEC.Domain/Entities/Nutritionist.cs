@@ -6,6 +6,8 @@ public class Nutritionist
 
     public string PaymentMethod { get; set; } = string.Empty;
 
+    public string BillingFrequency { get; set; } = "MONTHLY";
+
     public string? Photo { get; set; }
 
     public string Address { get; set; } = string.Empty;

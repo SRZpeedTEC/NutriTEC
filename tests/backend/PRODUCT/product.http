@@ -16,7 +16,7 @@ Content-Type: application/json
   "sodium": 65,
   "carbohydrates": 8,
   "protein": 16,
-  "vitamins": 1.5,
+  "vitamins": "C,B12",
   "calcium": 180,
   "iron": 0.2,
   "userId": {{userId}}
@@ -36,7 +36,7 @@ Content-Type: application/json
   "sodium": 60,
   "carbohydrates": 7,
   "protein": 15,
-  "vitamins": 1,
+  "vitamins": "A,D,E",
   "calcium": 175,
   "iron": 0.2,
   "userId": {{userId}}
@@ -58,7 +58,7 @@ Content-Type: application/json
   "sodium": 68,
   "carbohydrates": 9,
   "protein": 17,
-  "vitamins": 1.6,
+  "vitamins": "B1,B6,B12",
   "calcium": 190,
   "iron": 0.3,
   "userId": {{userId}}
@@ -77,7 +77,7 @@ Content-Type: application/json
   "sodium": 68,
   "carbohydrates": 9,
   "protein": 17,
-  "vitamins": 1.6,
+  "vitamins": "B1,B6,B12",
   "calcium": 190,
   "iron": 0.3,
   "userId": 999
@@ -103,7 +103,7 @@ Content-Type: application/json
   "sodium": -3,
   "carbohydrates": -4,
   "protein": -5,
-  "vitamins": -6,
+  "vitamins": "-6",
   "calcium": -7,
   "iron": -8,
   "userId": {{userId}}

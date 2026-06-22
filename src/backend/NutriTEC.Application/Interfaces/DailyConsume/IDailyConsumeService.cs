@@ -15,7 +15,7 @@ public interface IDailyConsumeService
 
     Task<DailyConsumeMutationResponse> AddProductBatchAsync(
         int clientId,
-        int mealTimeId,
+        string mealType,
         IReadOnlyCollection<DailyProductBatchItem> products,
         CancellationToken cancellationToken);
 
