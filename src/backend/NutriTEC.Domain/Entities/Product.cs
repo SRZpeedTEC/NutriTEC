@@ -17,7 +17,7 @@ public class Product
 
     public decimal Calcium { get; set; }
 
-    public decimal Vitamins { get; set; }
+    public string Vitamins { get; set; } = string.Empty;
 
     public decimal PortionSize { get; set; }
 

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using NutriTEC.Application.DTOs.Admin;
 using NutriTEC.Application.DTOs.Auth;
 using NutriTEC.Application.Interfaces.Admin;
 
@@ -11,13 +12,16 @@ public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
     private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IValidator<AdminBillingReportRequest> _billingReportValidator;
 
     public AdminController(
         IAdminService adminService,
-        IValidator<LoginRequest> loginValidator)
+        IValidator<LoginRequest> loginValidator,
+        IValidator<AdminBillingReportRequest> billingReportValidator)
     {
         _adminService = adminService;
         _loginValidator = loginValidator;
+        _billingReportValidator = billingReportValidator;
     }
 
     [HttpPost("login")]
@@ -38,6 +42,28 @@ public class AdminController : ControllerBase
         CancellationToken cancellationToken)
     {
         var response = await _adminService.GetProductsAsync(status, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpGet("billing-report")]
+    public async Task<IActionResult> GetBillingReport(
+        [FromQuery] string? frequency,
+        [FromQuery] DateTime cycleStartDate,
+        [FromQuery] DateTime cycleEndDate,
+        [FromQuery] decimal? pricePerPatient,
+        CancellationToken cancellationToken)
+    {
+        var request = new AdminBillingReportRequest
+        {
+            Frequency = frequency,
+            CycleStartDate = cycleStartDate,
+            CycleEndDate = cycleEndDate,
+            PricePerPatient = pricePerPatient
+        };
+
+        await _billingReportValidator.ValidateRequestAsync(request, cancellationToken);
+
+        var response = await _adminService.GetBillingReportAsync(request, cancellationToken);
         return Ok(response);
     }
 
