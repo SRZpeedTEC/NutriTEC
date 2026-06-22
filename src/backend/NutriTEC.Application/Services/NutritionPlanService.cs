@@ -168,6 +168,10 @@ public class NutritionPlanService : INutritionPlanService
             throw new ConflictException("El cliente no esta asociado como paciente activo de este nutricionista.");
         }
 
+        // Reasignar reemplaza el plan vigente: se cierra el activo anterior para respetar
+        // el indice unico (un plan ACTIVE por cliente) antes de insertar el nuevo.
+        await _planRepository.FinishActiveAssignmentsAsync(request.ClientId, cancellationToken);
+
         var assignment = new PlanAssignment
         {
             PlanId = planId,

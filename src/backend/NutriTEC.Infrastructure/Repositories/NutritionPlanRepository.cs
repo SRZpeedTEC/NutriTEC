@@ -103,6 +103,27 @@ public class NutritionPlanRepository : INutritionPlanRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task FinishActiveAssignmentsAsync(int clientId, CancellationToken cancellationToken)
+    {
+        // El esquema solo permite un plan ACTIVE por cliente (indice unico filtrado):
+        // se cierra cualquier asignacion activa previa antes de crear la nueva.
+        var activeAssignments = await _dbContext.PlanAssignments
+            .Where(a => a.ClientId == clientId && a.AssignmentStatus == "ACTIVE")
+            .ToListAsync(cancellationToken);
+
+        if (activeAssignments.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var assignment in activeAssignments)
+        {
+            assignment.AssignmentStatus = "FINISHED";
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task<PlanAssignment?> GetAssignmentByIdAsync(int assignmentId, CancellationToken cancellationToken)
     {
         return _dbContext.PlanAssignments

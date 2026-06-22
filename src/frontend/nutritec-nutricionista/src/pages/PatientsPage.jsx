@@ -8,10 +8,12 @@ import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
 import { getPatients, searchClients, associateClient, assignPlan, disassociateClient } from '@nutritec/shared/services/patientService.js';
 import { getPlans } from '@nutritec/shared/services/planService.js';
 import { byId } from '@nutritec/shared/utils/nutrition.js';
+import { toISODate } from '@nutritec/shared/utils/dates.js';
 
 function AssignModal({ patient, plans, onClose, onAssign }) {
   const [planId, setPlanId] = useState(plans[0]?.id ?? '');
-  const [start, setStart] = useState(new Date().toISOString().slice(0, 10));
+  // Fecha local (no UTC): evita un desfase de un día que dejaría el plan "sin empezar".
+  const [start, setStart] = useState(toISODate(new Date()));
   const [end, setEnd] = useState('');
   const plan = byId(plans, Number(planId));
   const total = plan ? Math.round(plan.totalCalories) : 0;
