@@ -16,6 +16,7 @@ function normalizeSession(data) {
     initials: initials(data.fullName),
     accountType: data.accountType,
     activePlan: data.activePlan ?? null,
+    photo: data.photo ?? null,
     message: data.message,
   };
 }
