@@ -163,6 +163,7 @@ public class AuthService : IAuthService
                 FullName = $"{user.Name} {user.LastName}",
                 AccountType = "Nutritionist",
                 ActivePlan = null,
+                Photo = nutritionist.Photo,
                 Message = "Inicio de sesion correcto."
             };
         }

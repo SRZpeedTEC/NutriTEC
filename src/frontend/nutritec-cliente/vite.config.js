@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5175,
     proxy: {
       '/api': 'http://localhost:5024',
+      '/uploads': 'http://localhost:5024',
       '/mongo-api': { target: 'http://localhost:5191', rewrite: (path) => path.replace(/^\/mongo-api/, '/api') },
     },
   },

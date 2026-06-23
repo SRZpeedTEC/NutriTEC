@@ -57,7 +57,7 @@ export default function App() {
   const [title, sub] = TITLES[screen];
   const go = (key) => { setScreen(key); setMenuOpen(false); };
   const openPatient = (id) => { setSelectedPatient(id); setScreen('seguimiento'); setMenuOpen(false); };
-  const user = { initials: session.initials, name: session.name, subtitle: session.email };
+  const user = { initials: session.initials, name: session.name, subtitle: session.email, photo: session.photo };
 
   return (
     <div className="nt-app">

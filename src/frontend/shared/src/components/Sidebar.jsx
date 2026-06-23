@@ -32,7 +32,9 @@ export default function Sidebar({ items, current, onNav, onLogout, open, role, n
       </nav>
       {user && (
         <div className="nt-side-user">
-          <div className="nt-avatar">{user.initials}</div>
+          {user.photo
+            ? <img src={user.photo} alt={user.name} className="nt-avatar" style={{ objectFit: 'cover', padding: 0 }} />
+            : <div className="nt-avatar">{user.initials}</div>}
           <div style={{ minWidth: 0 }}>
             <div className="fw-700 text-truncate" style={{ fontSize: '.9rem' }}>{user.name}</div>
             <div className="text-truncate text-muted-soft" style={{ fontSize: '.78rem' }}>{user.subtitle}</div>

@@ -19,5 +19,7 @@ public class LoginResponse
 
     public ActivePlanSummaryResponse? ActivePlan { get; set; }
 
+    public string? Photo { get; set; }
+
     public string Message { get; set; } = string.Empty;
 }
