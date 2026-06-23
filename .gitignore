@@ -39,3 +39,13 @@ Thumbs.db
 
 # Documentos de trabajo locales (guidelines, bitácoras): no se trackean
 .local/
+
+# Except these directions for deployments
+!deploys/admin/
+!deploys/client/
+!deploys/nutritionist/
+
+# And their content
+!deploys/admin/**
+!deploys/client/**
+!deploys/nutritionist/**

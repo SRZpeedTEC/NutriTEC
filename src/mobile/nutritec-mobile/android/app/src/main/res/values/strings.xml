@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NutriTEC</string>
+    <string name="title_activity_main">NutriTEC</string>
+    <string name="package_name">com.nutritec.app</string>
+    <string name="custom_url_scheme">com.nutritec.app</string>
+</resources>
