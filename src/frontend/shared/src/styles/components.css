@@ -109,7 +109,7 @@
 .nt-dp-todaybtn:hover { background: var(--nt-teal-100); }
 
 /* ---- Tarjetas de comida (tiempos de comida) ---- */
-.nt-meal { border: 1px solid var(--nt-line); border-radius: 14px; overflow: hidden; background: #fff; }
+.nt-meal { border: 1px solid var(--nt-line); border-radius: 14px; background: #fff; }
 .nt-meal-head { display: flex; align-items: center; justify-content: space-between; padding: .8rem 1.1rem; background: var(--nt-teal-50); border-bottom: 1px solid var(--nt-line); }
 .nt-meal-ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: #fff; border: 1px solid var(--nt-line); color: var(--nt-teal-700); flex: 0 0 32px; }
 .nt-food-row { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1.1rem; border-bottom: 1px solid var(--nt-line); }
