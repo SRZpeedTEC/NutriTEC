@@ -110,6 +110,7 @@ public class AuthService : IAuthService
             Age = user.Age,
             Email = user.Email,
             FullName = $"{user.Name} {user.LastName}",
+            Photo = nutritionist.Photo,
             Message = "Nutricionista registrado correctamente."
         };
     }
