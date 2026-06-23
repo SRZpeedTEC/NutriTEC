@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
 import SectionTitle from '@nutritec/shared/components/SectionTitle.jsx';
-import { getHistory, createMeasurement } from '@nutritec/shared/services/measurementService.js';
+import { getHistory, createMeasurement, updateMeasurement } from '@nutritec/shared/services/measurementService.js';
 import { formatDate } from '@nutritec/shared/utils/dates.js';
 
 const EMPTY_FORM = { date: '2026-06-08', weight: '', bmi: '', waist: '', neck: '', hips: '', muscle: '', fat: '' };
@@ -34,9 +34,29 @@ export default function MeasurementsPage({ clientId }) {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [mode, setMode] = useState('registrar');
+  const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState(null);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  // Carga una medida en el formulario para editarla (solo la más reciente es editable).
+  function startEdit(row) {
+    setForm({
+      date: row.date,
+      weight: row.weight, bmi: row.bmi,
+      waist: row.waist, neck: row.neck, hips: row.hips,
+      muscle: row.muscle, fat: row.fat,
+    });
+    setEditing(true);
+    setMode('registrar');
+  }
+
+  // Sale del modo edición y deja el formulario listo para un registro nuevo.
+  function newEntry() {
+    setForm(EMPTY_FORM);
+    setEditing(false);
+    setMode('registrar');
+  }
 
   // Carga el historial de medidas del cliente (más reciente primero).
   useEffect(() => {
@@ -53,16 +73,21 @@ export default function MeasurementsPage({ clientId }) {
     setTimeout(() => setToast(null), 2600);
   }
 
-  // Registra la medida contra el backend y recarga el historial.
+  // Registra una medida nueva o actualiza la más reciente, y recarga el historial.
   async function save(e) {
     e.preventDefault();
     try {
-      await createMeasurement(formToMeasurement(form), clientId);
+      if (editing) {
+        await updateMeasurement(clientId, form.date, formToMeasurement(form));
+      } else {
+        await createMeasurement(formToMeasurement(form), clientId);
+      }
       const data = await getHistory(clientId);
       setRows([...data].sort((a, b) => b.date.localeCompare(a.date)));
       setForm(EMPTY_FORM);
+      setEditing(false);
       setMode('historial');
-      flash('Medidas guardadas');
+      flash(editing ? 'Medidas actualizadas' : 'Medidas guardadas');
     } catch (err) {
       flash(err.message || 'No se pudieron guardar las medidas', true);
     }
@@ -78,18 +103,25 @@ export default function MeasurementsPage({ clientId }) {
   return (
     <div className="nt-content">
       <div className="nt-seg mb-4">
-        <button className={mode === 'registrar' ? 'on' : ''} onClick={() => setMode('registrar')}>Registrar</button>
+        <button className={mode === 'registrar' ? 'on' : ''} onClick={newEntry}>Registrar</button>
         <button className={mode === 'historial' ? 'on' : ''} onClick={() => setMode('historial')}>Historial</button>
       </div>
 
       {mode === 'registrar' ? (
         <div style={{ maxWidth: 560 }}>
           <div className="nt-card nt-card-pad">
-            <SectionTitle sub="Anota tus medidas para una fecha dada">Nuevo registro de medidas</SectionTitle>
+            <SectionTitle sub={editing ? 'Modifica la última medición registrada' : 'Anota tus medidas para una fecha dada'}>
+              {editing ? 'Editar última medida' : 'Nuevo registro de medidas'}
+            </SectionTitle>
             <form onSubmit={save}>
               <div className="mb-3">
                 <label className="form-label">Fecha</label>
-                <DatePicker value={form.date} onChange={(v) => set('date', v)} />
+                {editing ? (
+                  // La fecha identifica el registro y no puede cambiarse al editar.
+                  <input type="text" className="form-control" value={formatDate(form.date)} disabled readOnly />
+                ) : (
+                  <DatePicker value={form.date} onChange={(v) => set('date', v)} />
+                )}
               </div>
               <div className="row">
                 {FIELDS.map((c) => (
@@ -102,7 +134,14 @@ export default function MeasurementsPage({ clientId }) {
                   </div>
                 ))}
               </div>
-              <button type="submit" className="btn btn-primary w-100"><Icon name="plus" size={16} /> Guardar medidas</button>
+              <div className="d-flex gap-2">
+                <button type="submit" className="btn btn-primary flex-grow-1">
+                  <Icon name={editing ? 'edit' : 'plus'} size={16} /> {editing ? 'Actualizar medidas' : 'Guardar medidas'}
+                </button>
+                {editing && (
+                  <button type="button" className="btn btn-soft" onClick={newEntry}><Icon name="x" size={16} /> Cancelar</button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -111,7 +150,7 @@ export default function MeasurementsPage({ clientId }) {
           <SectionTitle sub="Tus medidas registradas">Historial</SectionTitle>
           <div className="table-responsive">
             <table className="table align-middle mb-0">
-              <thead><tr><th>Fecha</th><th>Peso</th><th>IMC</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músc.</th><th>% Grasa</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Peso</th><th>IMC</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músc.</th><th>% Grasa</th><th></th></tr></thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={i}>
@@ -119,9 +158,15 @@ export default function MeasurementsPage({ clientId }) {
                     <td>{r.weight} kg</td><td>{r.bmi}</td>
                     <td>{r.waist} cm</td><td>{r.neck} cm</td><td>{r.hips} cm</td>
                     <td>{r.muscle}%</td><td>{r.fat}%</td>
+                    {/* Solo la medición más reciente (primera fila) puede editarse. */}
+                    <td className="text-end">
+                      {i === 0 && (
+                        <button className="btn btn-sm btn-soft" onClick={() => startEdit(r)} title="Editar última medida"><Icon name="edit" size={14} /> Editar</button>
+                      )}
+                    </td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan="8"><div className="nt-empty">Aún no has registrado medidas.</div></td></tr>}
+                {rows.length === 0 && <tr><td colSpan="9"><div className="nt-empty">Aún no has registrado medidas.</div></td></tr>}
               </tbody>
             </table>
           </div>

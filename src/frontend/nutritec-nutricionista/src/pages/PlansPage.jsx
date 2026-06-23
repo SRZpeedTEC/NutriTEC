@@ -35,9 +35,23 @@ function PlanCard({ plan, onEdit, onDelete }) {
 }
 
 function MealBuilder({ meal, catalog, onAdd, onSetPortions, onRemove }) {
-  const [sel, setSel] = useState(catalog[0]?.barcode);
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
   const total = Math.round(mealKcal(meal.items, catalog));
   const over = total > meal.maxKcal;
+
+  // Filtra el catálogo por lo que escribe el nutricionista (nombre o código de barras).
+  const q = query.trim().toLowerCase();
+  const matches = q
+    ? catalog.filter((p) => p.name.toLowerCase().includes(q) || String(p.barcode).toLowerCase().includes(q)).slice(0, 8)
+    : [];
+
+  // Agrega el producto elegido al tiempo de comida y limpia el buscador.
+  function pick(barcode) {
+    onAdd(meal.mealTime, barcode);
+    setQuery('');
+    setOpen(false);
+  }
   return (
     <div className="nt-meal mb-3">
       <div className="nt-meal-head">
@@ -73,11 +87,35 @@ function MealBuilder({ meal, catalog, onAdd, onSetPortions, onRemove }) {
             })}
           </div>
         )}
-        <div className="input-group input-group-sm">
-          <select className="form-select" value={sel} onChange={(e) => setSel(e.target.value)}>
-            {catalog.map((p) => <option key={p.barcode} value={p.barcode}>{p.name} ({p.energy} kcal)</option>)}
-          </select>
-          <button className="btn btn-primary px-3" onClick={() => onAdd(meal.mealTime, sel)} disabled={!sel}><Icon name="plus" size={14} /> Agregar</button>
+        {/* Buscador por escritura: el nutricionista escribe y elige una coincidencia del catálogo. */}
+        <div className="position-relative">
+          <div className="input-group input-group-sm">
+            <span className="input-group-text"><Icon name="search" size={14} /></span>
+            <input type="text" className="form-control" placeholder="Escribe el nombre del producto…"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+              onFocus={() => setOpen(true)}
+              onBlur={() => setOpen(false)} />
+          </div>
+          {open && q && (
+            // onMouseDown evita el blur del input antes de registrar el clic en una opción.
+            <div className="list-group" onMouseDown={(e) => e.preventDefault()}
+              style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, marginTop: 4, maxHeight: 240, overflowY: 'auto', boxShadow: '0 6px 24px rgba(0,0,0,.12)' }}>
+              {matches.length === 0 ? (
+                <div className="list-group-item text-muted-soft" style={{ fontSize: '.85rem' }}>Sin coincidencias</div>
+              ) : matches.map((p) => {
+                const added = meal.items.some((i) => i.barcode === p.barcode);
+                return (
+                  <button type="button" key={p.barcode} disabled={added}
+                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                    onClick={() => pick(p.barcode)}>
+                    <span className="text-truncate">{p.name}</span>
+                    <span className="text-muted-soft ms-2 text-nowrap" style={{ fontSize: '.8rem' }}>{added ? 'Agregado' : p.energy + ' kcal'}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
