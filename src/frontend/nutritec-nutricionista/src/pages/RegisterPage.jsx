@@ -4,6 +4,7 @@ import Icon from '@nutritec/shared/components/Icon.jsx';
 import Field from '@nutritec/shared/components/Field.jsx';
 import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
 import { registerNutritionist } from '@nutritec/shared/services/authService.js';
+import { BASE_URL } from '@nutritec/shared/services/api.js';
 
 function PhotoUpload({ onChange }) {
   const [preview, setPreview] = useState(null);
@@ -20,13 +21,14 @@ function PhotoUpload({ onChange }) {
     try {
       const fd = new FormData();
       fd.append('photo', file);
-      const res = await fetch('/api/nutritionist/photo', { method: 'POST', body: fd });
+      const res = await fetch(`${BASE_URL}/nutritionist/photo`, { method: 'POST', body: fd });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.message ?? `Error ${res.status}`);
       }
       const { url } = await res.json();
-      onChange(url);
+      const backendOrigin = BASE_URL.replace(/\/api\/?$/, '');
+      onChange(`${backendOrigin}${url}`);
     } catch (ex) {
       setErr(ex.message);
       setPreview(null);
