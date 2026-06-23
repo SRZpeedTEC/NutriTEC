@@ -1,0 +1,16 @@
+/* Estilos del cliente mobile: misma base que la vista web */
+@import '@nutritec/shared/styles/base.css';
+@import '@nutritec/shared/styles/layout.css';
+@import '@nutritec/shared/styles/components.css';
+
+/* Ajustes específicos para pantalla móvil dentro del WebView */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area para notch / barra de estado en Android */
+.nt-app {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
