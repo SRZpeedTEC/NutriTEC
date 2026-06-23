@@ -9,10 +9,43 @@ namespace NutriTEC.Api.Controllers;
 public class NutritionistController : ControllerBase
 {
     private readonly INutritionistService _nutritionistService;
+    private readonly IWebHostEnvironment _env;
 
-    public NutritionistController(INutritionistService nutritionistService)
+    public NutritionistController(INutritionistService nutritionistService, IWebHostEnvironment env)
     {
         _nutritionistService = nutritionistService;
+        _env = env;
+    }
+
+    [HttpPost("photo")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadPhoto(
+        IFormFile photo,
+        CancellationToken cancellationToken)
+    {
+        const long maxBytes = 2 * 1024 * 1024;
+
+        if (photo is null || photo.Length == 0)
+            return BadRequest(new { message = "No se recibió ningún archivo." });
+        if (photo.Length > maxBytes)
+            return BadRequest(new { message = "La foto no puede superar 2 MB." });
+
+        var ct = photo.ContentType.ToLowerInvariant();
+        if (ct != "image/jpeg" && ct != "image/png")
+            return BadRequest(new { message = "Solo se permiten imágenes JPG o PNG." });
+
+        var ext = ct == "image/png" ? ".png" : ".jpg";
+        var fileName = $"{DateTimeOffset.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}{ext}";
+
+        var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var folder = Path.Combine(webRoot, "uploads", "nutritionists");
+        Directory.CreateDirectory(folder);
+
+        var filePath = Path.Combine(folder, fileName);
+        await using var stream = System.IO.File.Create(filePath);
+        await photo.CopyToAsync(stream, cancellationToken);
+
+        return Ok(new { url = $"/uploads/nutritionists/{fileName}" });
     }
 
     [HttpGet("clients/search")]

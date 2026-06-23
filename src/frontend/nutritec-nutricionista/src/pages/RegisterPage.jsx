@@ -1,18 +1,63 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import logo from '@nutritec/shared/assets/logo.png';
 import Icon from '@nutritec/shared/components/Icon.jsx';
 import Field from '@nutritec/shared/components/Field.jsx';
 import DatePicker from '@nutritec/shared/components/DatePicker.jsx';
 import { registerNutritionist } from '@nutritec/shared/services/authService.js';
+import { BASE_URL } from '@nutritec/shared/services/api.js';
 
-function PhotoUpload() {
+function PhotoUpload({ onChange }) {
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState(null);
+  const inputRef = useRef(null);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr(null);
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', file);
+      const res = await fetch(`${BASE_URL}/nutritionist/photo`, { method: 'POST', body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message ?? `Error ${res.status}`);
+      }
+      const { url } = await res.json();
+      const backendOrigin = BASE_URL.replace(/\/api\/?$/, '');
+      onChange(`${backendOrigin}${url}`);
+    } catch (ex) {
+      setErr(ex.message);
+      setPreview(null);
+      onChange(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="d-flex align-items-center gap-3 mb-3">
-      <div className="nt-photo-slot"><Icon name="user" size={28} /></div>
+      <div className="nt-photo-slot" style={{ overflow: 'hidden', position: 'relative' }}>
+        {preview
+          ? <img src={preview} alt="Foto de perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <Icon name="user" size={28} />}
+        {uploading && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner-border spinner-border-sm text-teal" />
+          </div>
+        )}
+      </div>
       <div>
         <div className="fw-700" style={{ fontSize: '.95rem' }}>Foto de perfil</div>
         <div className="text-muted-soft mb-2" style={{ fontSize: '.82rem' }}>JPG o PNG, máx. 2 MB (opcional)</div>
-        <button type="button" className="btn btn-soft btn-sm">Subir foto</button>
+        <button type="button" className="btn btn-soft btn-sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
+          {preview ? 'Cambiar foto' : 'Subir foto'}
+        </button>
+        {err && <div className="text-danger mt-1" style={{ fontSize: '.78rem' }}>{err}</div>}
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFile} />
       </div>
     </div>
   );
@@ -38,7 +83,7 @@ function CobroOption({ value, current, onSelect, title, price, detail }) {
 const EMPTY_FORM = {
   idNumber: '', firstName: '', lastName: '', birthDate: '',
   weight: '', bmi: '', address: '', email: '', password: '',
-  card: '', billingFrequency: 'MONTHLY',
+  card: '', billingFrequency: 'MONTHLY', photo: null,
 };
 
 const STEPS = ['Datos personales', 'Credenciales', 'Tipo de cobro'];
@@ -83,7 +128,7 @@ export default function RegisterPage({ onDone, onGoLogin }) {
         weight: Number(form.weight) || 0,
         bodyMassIndex: Number(form.bmi) || 0,
         address: form.address,
-        photo: null,
+        photo: form.photo,
         encryptedCreditCard: form.card,
         billingFrequency: form.billingFrequency,
       };
@@ -113,7 +158,7 @@ export default function RegisterPage({ onDone, onGoLogin }) {
 
         {step === 0 && (
           <>
-            <PhotoUpload />
+            <PhotoUpload onChange={(url) => set('photo', url)} />
             <div className="row">
               <Field label="Número de cédula" ph="1-1234-5678" icon="card" half value={form.idNumber} onChange={(v) => set('idNumber', v)} />
               <Field label="Código de nutricionista" ph="Se asignará automáticamente" icon="shield" half value="" disabled />

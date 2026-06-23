@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using NutriTEC.MongoDomain.Documents;
 using NutriTEC.MongoApplication.DTOs.Messages;
 using NutriTEC.MongoApplication.Interfaces;
@@ -23,6 +24,7 @@ public class MessageService : IMessageService
 
         var message = new Message
         {
+            Id = ObjectId.GenerateNewId().ToString(),
             NutritionistCode = request.NutritionistCode,
             ClientId = request.ClientId,
             SenderId = request.SenderId,

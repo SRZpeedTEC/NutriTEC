@@ -110,6 +110,7 @@ public class AuthService : IAuthService
             Age = user.Age,
             Email = user.Email,
             FullName = $"{user.Name} {user.LastName}",
+            Photo = nutritionist.Photo,
             Message = "Nutricionista registrado correctamente."
         };
     }
@@ -163,6 +164,7 @@ public class AuthService : IAuthService
                 FullName = $"{user.Name} {user.LastName}",
                 AccountType = "Nutritionist",
                 ActivePlan = null,
+                Photo = nutritionist.Photo,
                 Message = "Inicio de sesion correcto."
             };
         }

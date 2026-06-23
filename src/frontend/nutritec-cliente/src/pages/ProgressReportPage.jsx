@@ -68,15 +68,20 @@ export default function ProgressReportPage({ clientId, userName }) {
           <div className="nt-empty">No hay medidas registradas en este periodo.</div>
         ) : (
           <>
-            <div className="d-flex flex-wrap gap-2 mb-3 d-print-none">
-              {METRICS.map((m) => (
-                <button key={m.k} className={'btn btn-sm ' + (metric === m.k ? 'btn-primary' : 'btn-soft')} onClick={() => setMetric(m.k)}>{m.l}</button>
-              ))}
+            {/* Vista en pantalla: selector de métrica y un único gráfico interactivo (no se imprime). */}
+            <div className="d-print-none">
+              <div className="d-flex flex-wrap gap-2 mb-3">
+                {METRICS.map((m) => (
+                  <button key={m.k} className={'btn btn-sm ' + (metric === m.k ? 'btn-primary' : 'btn-soft')} onClick={() => setMetric(m.k)}>{m.l}</button>
+                ))}
+              </div>
+              <div className="mb-4">
+                <div className="fw-700 mb-2">{mm.l} ({mm.u})</div>
+                <LineChart data={measurements} keyName={metric} />
+              </div>
             </div>
-            <div className="mb-4">
-              <div className="fw-700 mb-2">{mm.l} ({mm.u})</div>
-              <LineChart data={measurements} keyName={metric} />
-            </div>
+
+            {/* En el PDF las medidas (tabla) van primero y los gráficos después. */}
             <div className="table-responsive">
               <table className="table table-striped align-middle">
                 <thead><tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Cuello</th><th>Caderas</th><th>% Músculo</th><th>% Grasa</th></tr></thead>
@@ -89,6 +94,17 @@ export default function ProgressReportPage({ clientId, userName }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Vista para PDF: todos los gráficos juntos (oculto en pantalla, visible al imprimir). */}
+            <div className="d-none d-print-block">
+              {METRICS.map((m) => (
+                // breakInside evita que un gráfico quede cortado entre dos páginas del PDF.
+                <div key={m.k} className="mb-4" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="fw-700 mb-2">{m.l} ({m.u})</div>
+                  <LineChart data={measurements} keyName={m.k} />
+                </div>
+              ))}
             </div>
           </>
         )}
