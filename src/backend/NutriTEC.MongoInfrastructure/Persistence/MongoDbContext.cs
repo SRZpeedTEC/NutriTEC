@@ -11,7 +11,8 @@ public class MongoDbContext
     public MongoDbContext(MongoDbSettings settings)
     {
         var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
-        clientSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(3);
+        clientSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(30);
+        clientSettings.ConnectTimeout = TimeSpan.FromSeconds(30);
         var client = new MongoClient(clientSettings);
         _database = client.GetDatabase(settings.DatabaseName);
 
